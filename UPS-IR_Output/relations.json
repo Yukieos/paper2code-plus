@@ -1,0 +1,30 @@
+[
+  {
+    "from": "q1",
+    "to": "q2",
+    "type": "refines",
+    "rationale": "Understanding the impact of distillation is crucial for the main question.",
+    "source_reference": "Section 1"
+  },
+  {
+    "from": "q1",
+    "to": "q3",
+    "type": "refines",
+    "rationale": "Analyzing the triple loss components is essential for the main question.",
+    "source_reference": "Section 1"
+  },
+  {
+    "from": "q1",
+    "to": "q4",
+    "type": "refines",
+    "rationale": "Comparing performance with BERT is a key aspect of the main question.",
+    "source_reference": "Section 1"
+  },
+  {
+    "from": "q3",
+    "to": "q5",
+    "type": "refines",
+    "rationale": "The ablation study focuses on the components of the triple loss.",
+    "source_reference": "Section 4.2"
+  }
+]

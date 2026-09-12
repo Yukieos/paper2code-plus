@@ -1,0 +1,708 @@
+{
+  "repository_name": "distilbert-implementation",
+  "summary": "A runnable code repository for training and evaluating DistilBERT, a distilled version of BERT, using knowledge distillation and a triple loss approach.",
+  "global_dependencies": [
+    "torch",
+    "transformers",
+    "datasets",
+    "numpy",
+    "json",
+    "argparse"
+  ],
+  "parameters": [
+    {
+      "name": "batch_size",
+      "context": null,
+      "defined_in_paper": true,
+      "value": "4096",
+      "suggested_values": "4096, 2048, 1024",
+      "reason": "Batch size affects training stability and speed.",
+      "default_value": 4096,
+      "risk_level": "medium"
+    },
+    {
+      "name": "learning_rate",
+      "context": null,
+      "defined_in_paper": false,
+      "value": null,
+      "suggested_values": "5e-5, 3e-5, 2e-5",
+      "reason": "Learning rate is crucial for model convergence.",
+      "default_value": 5e-05,
+      "risk_level": "high"
+    },
+    {
+      "name": "temperature",
+      "context": null,
+      "defined_in_paper": false,
+      "value": null,
+      "suggested_values": "2.0, 1.0, 0.5",
+      "reason": "Temperature controls the smoothness of the output distribution during distillation.",
+      "default_value": 2.0,
+      "risk_level": "high"
+    },
+    {
+      "name": "num_epochs",
+      "context": null,
+      "defined_in_paper": false,
+      "value": null,
+      "suggested_values": "3, 5, 10",
+      "reason": "Number of epochs affects overfitting and training time.",
+      "default_value": 3,
+      "risk_level": "medium"
+    }
+  ],
+  "files": [
+    {
+      "path": "main.py",
+      "purpose": "Entry point for the DistilBERT training and evaluation process.",
+      "content_outline": [
+        "Parse command line arguments",
+        "Load configuration from config.json",
+        "Initialize model and tokenizer",
+        "Load dataset",
+        "Train the model",
+        "Evaluate the model"
+      ],
+      "key_functions": [
+        "main",
+        "load_config",
+        "train_model",
+        "evaluate_model"
+      ],
+      "function_skeletons": [
+        {
+          "name": "main",
+          "signature": "def main(config_path: str, seed: int) -> None:",
+          "docstring": "Main entry point for the DistilBERT training and evaluation process.",
+          "core_steps": [
+            "Parse command line arguments for config and seed",
+            "Load configuration from the specified JSON file",
+            "Set random seed for reproducibility",
+            "Initialize model and tokenizer",
+            "Load dataset",
+            "Train the model using the training function",
+            "Evaluate the model using the evaluation function"
+          ],
+          "key_variables": [
+            {
+              "name": "config",
+              "type": "dict",
+              "purpose": "Configuration settings for training and evaluation."
+            },
+            {
+              "name": "seed",
+              "type": "int",
+              "purpose": "Random seed for reproducibility."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Abstract",
+            "Section 1"
+          ]
+        },
+        {
+          "name": "load_config",
+          "signature": "def load_config(config_path: str) -> dict:",
+          "docstring": "Load configuration settings from a JSON file.",
+          "core_steps": [
+            "Open the JSON file",
+            "Parse the JSON content",
+            "Return the configuration as a dictionary"
+          ],
+          "key_variables": [
+            {
+              "name": "config",
+              "type": "dict",
+              "purpose": "Configuration settings loaded from the JSON file."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 1"
+          ]
+        },
+        {
+          "name": "train_model",
+          "signature": "def train_model(model, dataset, batch_size: int, learning_rate: float, num_epochs: int, temperature: float) -> None:",
+          "docstring": "Train the DistilBERT model on the provided dataset using triple loss.",
+          "core_steps": [
+            "Set up the optimizer with the specified learning rate",
+            "Iterate over the dataset for the specified number of epochs",
+            "For each batch, perform forward and backward passes",
+            "Compute triple loss and update model parameters"
+          ],
+          "key_variables": [
+            {
+              "name": "model",
+              "type": "torch.nn.Module",
+              "purpose": "The DistilBERT model to be trained."
+            },
+            {
+              "name": "dataset",
+              "type": "torch.utils.data.Dataset",
+              "purpose": "The dataset used for training."
+            },
+            {
+              "name": "optimizer",
+              "type": "torch.optim.Optimizer",
+              "purpose": "Optimizer for updating model parameters."
+            },
+            {
+              "name": "triple_loss",
+              "type": "float",
+              "purpose": "Computed triple loss value for the current batch."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 3"
+          ]
+        },
+        {
+          "name": "evaluate_model",
+          "signature": "def evaluate_model(model, dataset) -> dict:",
+          "docstring": "Evaluate the trained DistilBERT model on the provided dataset.",
+          "core_steps": [
+            "Set the model to evaluation mode",
+            "Iterate over the dataset",
+            "Compute evaluation metrics such as accuracy and F1 score",
+            "Return metrics as a dictionary"
+          ],
+          "key_variables": [
+            {
+              "name": "model",
+              "type": "torch.nn.Module",
+              "purpose": "The trained DistilBERT model."
+            },
+            {
+              "name": "dataset",
+              "type": "torch.utils.data.Dataset",
+              "purpose": "The dataset used for evaluation."
+            },
+            {
+              "name": "metrics",
+              "type": "dict",
+              "purpose": "Evaluation metrics computed from the dataset."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 4"
+          ]
+        }
+      ],
+      "dependencies": [],
+      "requires_parameters": [
+        {
+          "name": "batch_size",
+          "context": "Training configuration",
+          "defined_in_paper": true,
+          "value": null,
+          "suggested_values": "",
+          "reason": "",
+          "default_value": null,
+          "risk_level": "low"
+        },
+        {
+          "name": "learning_rate",
+          "context": "Training configuration",
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "",
+          "default_value": null,
+          "risk_level": "low"
+        },
+        {
+          "name": "num_epochs",
+          "context": "Training configuration",
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "",
+          "default_value": null,
+          "risk_level": "low"
+        },
+        {
+          "name": "temperature",
+          "context": "Distillation configuration",
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "",
+          "default_value": null,
+          "risk_level": "low"
+        }
+      ],
+      "acceptance_criteria": [
+        "The script runs without errors when provided with valid arguments.",
+        "The model trains for the specified number of epochs and saves the trained model.",
+        "The evaluation function returns metrics in a dictionary format, including accuracy and F1 score."
+      ]
+    },
+    {
+      "path": "config.json",
+      "purpose": "Configuration file for model training and evaluation parameters.",
+      "content_outline": [
+        "Batch size",
+        "Learning rate",
+        "Number of epochs",
+        "Temperature for distillation"
+      ],
+      "key_functions": [],
+      "function_skeletons": [],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "The JSON file is valid and can be loaded without errors.",
+        "Contains all necessary parameters for training and evaluation, including 'temperature'."
+      ]
+    },
+    {
+      "path": "data/loaders.py",
+      "purpose": "Data loading utilities for training and evaluation datasets.",
+      "content_outline": [
+        "Define data loading functions",
+        "Preprocess datasets",
+        "Return data loaders"
+      ],
+      "key_functions": [
+        "load_dataset"
+      ],
+      "function_skeletons": [
+        {
+          "name": "load_dataset",
+          "signature": "def load_dataset(split: str) -> torch.utils.data.Dataset:",
+          "docstring": "Load and preprocess the dataset for training or evaluation.",
+          "core_steps": [
+            "Load the dataset from the specified source",
+            "Preprocess the dataset (tokenization, padding, etc.)",
+            "Return the dataset as a PyTorch Dataset object"
+          ],
+          "key_variables": [
+            {
+              "name": "split",
+              "type": "str",
+              "purpose": "Specify whether to load the training or evaluation dataset."
+            },
+            {
+              "name": "dataset",
+              "type": "torch.utils.data.Dataset",
+              "purpose": "The loaded and preprocessed dataset."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 3"
+          ]
+        }
+      ],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "The function loads the dataset correctly based on the split parameter.",
+        "The returned dataset is in the expected format for training."
+      ]
+    },
+    {
+      "path": "models/distilbert.py",
+      "purpose": "Model definition for DistilBERT.",
+      "content_outline": [
+        "Define the DistilBERT model architecture",
+        "Initialize weights",
+        "Forward pass method"
+      ],
+      "key_functions": [
+        "DistilBERT"
+      ],
+      "function_skeletons": [
+        {
+          "name": "DistilBERT",
+          "signature": "class DistilBERT(nn.Module):",
+          "docstring": "DistilBERT model architecture based on the Transformer architecture.",
+          "core_steps": [
+            "Initialize the model layers",
+            "Define the forward pass",
+            "Return the output logits"
+          ],
+          "key_variables": [
+            {
+              "name": "self",
+              "type": "DistilBERT",
+              "purpose": "Instance of the DistilBERT model."
+            },
+            {
+              "name": "inputs",
+              "type": "torch.Tensor",
+              "purpose": "Input tensor for the model."
+            },
+            {
+              "name": "outputs",
+              "type": "torch.Tensor",
+              "purpose": "Output logits from the model."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 3"
+          ]
+        }
+      ],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "The model initializes without errors.",
+        "The forward pass returns output logits for given inputs."
+      ]
+    },
+    {
+      "path": "training/train.py",
+      "purpose": "Training script for DistilBERT.",
+      "content_outline": [
+        "Import necessary libraries",
+        "Load configuration",
+        "Load dataset",
+        "Initialize model",
+        "Train the model"
+      ],
+      "key_functions": [
+        "train"
+      ],
+      "function_skeletons": [
+        {
+          "name": "train",
+          "signature": "def train(config: dict) -> None:",
+          "docstring": "Train the DistilBERT model based on the provided configuration.",
+          "core_steps": [
+            "Load dataset using the specified parameters",
+            "Initialize the model",
+            "Train the model using the training function"
+          ],
+          "key_variables": [
+            {
+              "name": "config",
+              "type": "dict",
+              "purpose": "Configuration settings for training."
+            },
+            {
+              "name": "model",
+              "type": "DistilBERT",
+              "purpose": "The DistilBERT model to be trained."
+            },
+            {
+              "name": "dataset",
+              "type": "torch.utils.data.Dataset",
+              "purpose": "The dataset used for training."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 3"
+          ]
+        }
+      ],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "The training script runs without errors and trains the model as expected, reporting metrics in a specified format."
+      ]
+    },
+    {
+      "path": "evaluation/evaluate.py",
+      "purpose": "Evaluation script for DistilBERT.",
+      "content_outline": [
+        "Import necessary libraries",
+        "Load configuration",
+        "Load dataset",
+        "Evaluate the model"
+      ],
+      "key_functions": [
+        "evaluate"
+      ],
+      "function_skeletons": [
+        {
+          "name": "evaluate",
+          "signature": "def evaluate(config: dict) -> dict:",
+          "docstring": "Evaluate the DistilBERT model based on the provided configuration.",
+          "core_steps": [
+            "Load dataset using the specified parameters",
+            "Load the trained model",
+            "Evaluate the model using the evaluation function"
+          ],
+          "key_variables": [
+            {
+              "name": "config",
+              "type": "dict",
+              "purpose": "Configuration settings for evaluation."
+            },
+            {
+              "name": "model",
+              "type": "DistilBERT",
+              "purpose": "The trained DistilBERT model."
+            },
+            {
+              "name": "metrics",
+              "type": "dict",
+              "purpose": "Evaluation metrics computed from the dataset."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 4"
+          ]
+        }
+      ],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "The evaluation script runs without errors and returns evaluation metrics in a specified format."
+      ]
+    },
+    {
+      "path": "utils/helpers.py",
+      "purpose": "Utility functions for various tasks.",
+      "content_outline": [
+        "Define helper functions for logging",
+        "Define functions for metric calculations"
+      ],
+      "key_functions": [
+        "calculate_metrics"
+      ],
+      "function_skeletons": [
+        {
+          "name": "calculate_metrics",
+          "signature": "def calculate_metrics(predictions: np.ndarray, labels: np.ndarray) -> dict:",
+          "docstring": "Calculate evaluation metrics such as accuracy and F1 score.",
+          "core_steps": [
+            "Compute accuracy based on predictions and labels",
+            "Compute F1 score based on predictions and labels",
+            "Return metrics as a dictionary"
+          ],
+          "key_variables": [
+            {
+              "name": "predictions",
+              "type": "np.ndarray",
+              "purpose": "Predicted labels from the model."
+            },
+            {
+              "name": "labels",
+              "type": "np.ndarray",
+              "purpose": "True labels for the evaluation."
+            },
+            {
+              "name": "metrics",
+              "type": "dict",
+              "purpose": "Computed evaluation metrics."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 4"
+          ]
+        }
+      ],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "The function computes metrics correctly based on input predictions and labels."
+      ]
+    }
+  ],
+  "tests": [
+    {
+      "path": "tests/test_train.py",
+      "purpose": "Unit tests for the training module.",
+      "test_functions": [
+        "test_train_model",
+        "test_load_dataset"
+      ]
+    },
+    {
+      "path": "tests/test_evaluate.py",
+      "purpose": "Unit tests for the evaluation module.",
+      "test_functions": [
+        "test_evaluate_model",
+        "test_calculate_metrics"
+      ]
+    }
+  ],
+  "flow_reasoning": {
+    "execution_order": [
+      {
+        "step_id": "s1",
+        "description": "Load configuration settings for the training process.",
+        "sequence_index": 0,
+        "source_reference": "Section 1",
+        "figure_ids": [],
+        "algorithm_ids": [],
+        "equation_ids": [],
+        "prerequisites": [],
+        "consumes_variables": [],
+        "produces_variables": [],
+        "trigger_conditions": []
+      },
+      {
+        "step_id": "s2",
+        "description": "Load the dataset required for training DistilBERT.",
+        "sequence_index": 1,
+        "source_reference": "Section 3",
+        "figure_ids": [],
+        "algorithm_ids": [],
+        "equation_ids": [],
+        "prerequisites": [],
+        "consumes_variables": [
+          "config"
+        ],
+        "produces_variables": [
+          "dataset"
+        ],
+        "trigger_conditions": []
+      },
+      {
+        "step_id": "s3",
+        "description": "Initialize the DistilBERT model architecture based on the teacher model.",
+        "sequence_index": 2,
+        "source_reference": "Section 3",
+        "figure_ids": [],
+        "algorithm_ids": [],
+        "equation_ids": [],
+        "prerequisites": [],
+        "consumes_variables": [],
+        "produces_variables": [
+          "model"
+        ],
+        "trigger_conditions": []
+      },
+      {
+        "step_id": "s4",
+        "description": "Train the DistilBERT model using the loaded dataset and specified training parameters.",
+        "sequence_index": 3,
+        "source_reference": "Section 3",
+        "figure_ids": [],
+        "algorithm_ids": [],
+        "equation_ids": [],
+        "prerequisites": [],
+        "consumes_variables": [
+          "dataset",
+          "model"
+        ],
+        "produces_variables": [
+          "trained_model"
+        ],
+        "trigger_conditions": [
+          "training_phase"
+        ]
+      },
+      {
+        "step_id": "s5",
+        "description": "Evaluate the trained DistilBERT model on various NLP tasks to assess performance.",
+        "sequence_index": 4,
+        "source_reference": "Section 4",
+        "figure_ids": [],
+        "algorithm_ids": [],
+        "equation_ids": [],
+        "prerequisites": [],
+        "consumes_variables": [
+          "trained_model"
+        ],
+        "produces_variables": [
+          "evaluation_results"
+        ],
+        "trigger_conditions": []
+      },
+      {
+        "step_id": "s6",
+        "description": "Calculate metrics based on the evaluation results to quantify model performance.",
+        "sequence_index": 5,
+        "source_reference": "Section 4",
+        "figure_ids": [],
+        "algorithm_ids": [],
+        "equation_ids": [],
+        "prerequisites": [],
+        "consumes_variables": [
+          "evaluation_results"
+        ],
+        "produces_variables": [
+          "metrics"
+        ],
+        "trigger_conditions": []
+      }
+    ],
+    "transitions": [
+      {
+        "from_step": "s1",
+        "to_step": "s2",
+        "condition": null,
+        "rationale": null
+      },
+      {
+        "from_step": "s2",
+        "to_step": "s3",
+        "condition": null,
+        "rationale": null
+      },
+      {
+        "from_step": "s3",
+        "to_step": "s4",
+        "condition": null,
+        "rationale": null
+      },
+      {
+        "from_step": "s4",
+        "to_step": "s5",
+        "condition": null,
+        "rationale": null
+      },
+      {
+        "from_step": "s5",
+        "to_step": "s6",
+        "condition": null,
+        "rationale": null
+      }
+    ],
+    "variable_dependencies": [
+      {
+        "variable": "dataset",
+        "depends_on": [
+          "config"
+        ],
+        "source_reference": "Section 3",
+        "rationale": null
+      },
+      {
+        "variable": "model",
+        "depends_on": [
+          "dataset"
+        ],
+        "source_reference": "Section 3",
+        "rationale": null
+      },
+      {
+        "variable": "trained_model",
+        "depends_on": [
+          "dataset",
+          "model"
+        ],
+        "source_reference": "Section 3",
+        "rationale": null
+      },
+      {
+        "variable": "evaluation_results",
+        "depends_on": [
+          "trained_model"
+        ],
+        "source_reference": "Section 4",
+        "rationale": null
+      },
+      {
+        "variable": "metrics",
+        "depends_on": [
+          "evaluation_results"
+        ],
+        "source_reference": "Section 4",
+        "rationale": null
+      }
+    ]
+  }
+}

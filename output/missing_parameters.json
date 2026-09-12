@@ -1,0 +1,71 @@
+{
+  "generated_at": "2025-11-26T21:05:35.115845+00:00",
+  "parameters": [
+    {
+      "name": "learning_rate",
+      "context": "global",
+      "reason": "Learning rate is crucial for model convergence.",
+      "suggested_values": "5e-5, 3e-5, 2e-5",
+      "default_value": 5e-05,
+      "risk_level": "high",
+      "referenced_files": [],
+      "contexts_note": "This parameter appears in multiple contexts: global, main.py"
+    },
+    {
+      "name": "learning_rate",
+      "context": "main.py",
+      "reason": "",
+      "suggested_values": "",
+      "default_value": null,
+      "risk_level": "low",
+      "referenced_files": [
+        "main.py"
+      ],
+      "contexts_note": "This parameter appears in multiple contexts: global, main.py"
+    },
+    {
+      "name": "num_epochs",
+      "context": "global",
+      "reason": "Number of epochs affects overfitting and training time.",
+      "suggested_values": "3, 5, 10",
+      "default_value": 3,
+      "risk_level": "medium",
+      "referenced_files": [],
+      "contexts_note": "This parameter appears in multiple contexts: global, main.py"
+    },
+    {
+      "name": "num_epochs",
+      "context": "main.py",
+      "reason": "",
+      "suggested_values": "",
+      "default_value": null,
+      "risk_level": "low",
+      "referenced_files": [
+        "main.py"
+      ],
+      "contexts_note": "This parameter appears in multiple contexts: global, main.py"
+    },
+    {
+      "name": "temperature",
+      "context": "global",
+      "reason": "Temperature controls the smoothness of the output distribution during distillation.",
+      "suggested_values": "2.0, 1.0, 0.5",
+      "default_value": 2.0,
+      "risk_level": "high",
+      "referenced_files": [],
+      "contexts_note": "This parameter appears in multiple contexts: global, main.py"
+    },
+    {
+      "name": "temperature",
+      "context": "main.py",
+      "reason": "",
+      "suggested_values": "",
+      "default_value": null,
+      "risk_level": "low",
+      "referenced_files": [
+        "main.py"
+      ],
+      "contexts_note": "This parameter appears in multiple contexts: global, main.py"
+    }
+  ]
+}

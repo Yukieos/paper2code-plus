@@ -1,0 +1,23 @@
+[
+  {
+    "id": "t1",
+    "name": "Model Training",
+    "description": "Training DistilBERT using knowledge distillation and a triple loss.",
+    "source_reference": "Section 3",
+    "source_text": "the student - DistilBERT - has the same general architecture as BERT"
+  },
+  {
+    "id": "t2",
+    "name": "Model Evaluation",
+    "description": "Evaluating DistilBERT on various NLP tasks to compare its performance with BERT.",
+    "source_reference": "Section 4",
+    "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+  },
+  {
+    "id": "t3",
+    "name": "Ablation Study",
+    "description": "Investigating the impact of different components of the triple loss on model performance.",
+    "source_reference": "Section 4.2",
+    "source_text": "we investigate the influence of various components of the triple loss"
+  }
+]

@@ -1,0 +1,71 @@
+{
+  "generated_at": "2025-11-26T21:05:35.116746+00:00",
+  "placeholders": [
+    {
+      "name": "learning_rate",
+      "context": "global",
+      "reason": "Learning rate is crucial for model convergence.",
+      "suggested_values": "5e-5, 3e-5, 2e-5",
+      "risk_level": "high",
+      "referenced_files": [],
+      "value": null,
+      "notes": "Provide a value based on paper insights or experimentation."
+    },
+    {
+      "name": "learning_rate",
+      "context": "main.py",
+      "reason": "",
+      "suggested_values": "",
+      "risk_level": "low",
+      "referenced_files": [
+        "main.py"
+      ],
+      "value": null,
+      "notes": "Provide a value based on paper insights or experimentation."
+    },
+    {
+      "name": "num_epochs",
+      "context": "global",
+      "reason": "Number of epochs affects overfitting and training time.",
+      "suggested_values": "3, 5, 10",
+      "risk_level": "medium",
+      "referenced_files": [],
+      "value": null,
+      "notes": "Provide a value based on paper insights or experimentation."
+    },
+    {
+      "name": "num_epochs",
+      "context": "main.py",
+      "reason": "",
+      "suggested_values": "",
+      "risk_level": "low",
+      "referenced_files": [
+        "main.py"
+      ],
+      "value": null,
+      "notes": "Provide a value based on paper insights or experimentation."
+    },
+    {
+      "name": "temperature",
+      "context": "global",
+      "reason": "Temperature controls the smoothness of the output distribution during distillation.",
+      "suggested_values": "2.0, 1.0, 0.5",
+      "risk_level": "high",
+      "referenced_files": [],
+      "value": null,
+      "notes": "Provide a value based on paper insights or experimentation."
+    },
+    {
+      "name": "temperature",
+      "context": "main.py",
+      "reason": "",
+      "suggested_values": "",
+      "risk_level": "low",
+      "referenced_files": [
+        "main.py"
+      ],
+      "value": null,
+      "notes": "Provide a value based on paper insights or experimentation."
+    }
+  ]
+}

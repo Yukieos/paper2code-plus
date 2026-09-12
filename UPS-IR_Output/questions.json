@@ -1,0 +1,47 @@
+[
+  {
+    "id": "q1",
+    "text": "How can we create a smaller, faster, and cheaper language model while retaining performance?",
+    "role": "primary",
+    "goal": "To develop DistilBERT, a distilled version of BERT.",
+    "parent": "q1",
+    "source_reference": "Abstract",
+    "source_text": "we propose a method to pre-train a smaller general-purpose language representation model, called DistilBERT"
+  },
+  {
+    "id": "q2",
+    "text": "What is the impact of knowledge distillation on model size and performance?",
+    "role": "sub",
+    "goal": "To evaluate the effectiveness of knowledge distillation in reducing model size while maintaining performance.",
+    "parent": "q1",
+    "source_reference": "Section 1",
+    "source_text": "we show that it is possible to reach similar performances on many downstream-tasks using much smaller language models"
+  },
+  {
+    "id": "q3",
+    "text": "What are the components of the triple loss used in training DistilBERT?",
+    "role": "sub",
+    "goal": "To analyze the contributions of each component of the triple loss.",
+    "parent": "q1",
+    "source_reference": "Section 1",
+    "source_text": "we introduce a triple loss combining language modeling, distillation and cosine-distance losses"
+  },
+  {
+    "id": "q4",
+    "text": "How does DistilBERT perform on various NLP tasks compared to BERT?",
+    "role": "sub",
+    "goal": "To compare the performance of DistilBERT with BERT on downstream tasks.",
+    "parent": "q1",
+    "source_reference": "Section 4",
+    "source_text": "DistilBERT is always on par or improving over the ELMo baseline"
+  },
+  {
+    "id": "q5",
+    "text": "What is the effect of different components of the triple loss on performance?",
+    "role": "sub",
+    "goal": "To conduct an ablation study on the triple loss components.",
+    "parent": "q3",
+    "source_reference": "Section 4.2",
+    "source_text": "we investigate the influence of various components of the triple loss"
+  }
+]

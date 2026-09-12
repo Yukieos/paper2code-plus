@@ -1,0 +1,18 @@
+[
+  {
+    "id": "e1",
+    "latex": "L_{ce} = \\sum_{i} t_{i} * \\log(s_{i})",
+    "units": "unknown",
+    "description": "Cross-entropy loss for distillation.",
+    "source_reference": "Section 2",
+    "source_text": "The student is trained with a distillation loss over the soft target probabilities of the teacher"
+  },
+  {
+    "id": "e2",
+    "latex": "p_{i} = \\frac{\\exp(z_{i}/T)}{\\sum_{j} \\exp(z_{j}/T)}",
+    "units": "unknown",
+    "description": "Softmax temperature function.",
+    "source_reference": "Section 2",
+    "source_text": "we used a softmax-temperature"
+  }
+]

@@ -1,0 +1,205 @@
+[
+  {
+    "id": "ms1",
+    "method_id": "m1",
+    "question_id": "q1",
+    "stage": "Pre-training",
+    "description": "Pre-train DistilBERT using knowledge distillation from a larger BERT model.",
+    "inputs": [
+      "d1"
+    ],
+    "outputs": [
+      "DistilBERT model"
+    ],
+    "hyperparameters": [
+      {
+        "name": "batch_size",
+        "value": "4096",
+        "description": "Number of examples per batch during training."
+      },
+      {
+        "name": "temperature",
+        "value": "unknown",
+        "description": "Temperature parameter for softmax during distillation."
+      }
+    ],
+    "loss": "L_{ce} + L_{mlm} + L_{cos}",
+    "optimizer": "unknown",
+    "learning_rate": "unknown",
+    "schedule": "unknown",
+    "objective": "To minimize the combined loss for effective training.",
+    "target_metric": "Performance on downstream tasks",
+    "notes": "The model is initialized from the teacher model.",
+    "depends_on": [],
+    "source_reference": "Section 3",
+    "source_text": "we introduce a triple loss combining language modeling, distillation and cosine-distance losses"
+  },
+  {
+    "id": "ms2",
+    "method_id": "m2",
+    "question_id": "q2",
+    "stage": "Hyperparameter Tuning",
+    "description": "Tune hyperparameters to optimize DistilBERT's performance.",
+    "inputs": [
+      "d1"
+    ],
+    "outputs": [
+      "Optimized DistilBERT model"
+    ],
+    "hyperparameters": [
+      {
+        "name": "learning_rate",
+        "value": "5e-5",
+        "description": "Learning rate for the optimizer."
+      },
+      {
+        "name": "dropout_rate",
+        "value": "0.1",
+        "description": "Dropout rate to prevent overfitting."
+      }
+    ],
+    "loss": "L_{ce} + L_{mlm} + L_{cos}",
+    "optimizer": "AdamW",
+    "learning_rate": "5e-5",
+    "schedule": "linear",
+    "objective": "To find the best hyperparameters for model performance.",
+    "target_metric": "Validation accuracy",
+    "notes": "Hyperparameters are tuned based on validation set performance.",
+    "depends_on": [
+      "ms1"
+    ],
+    "source_reference": "Section 3",
+    "source_text": "We leverage knowledge distillation during the pre-training phase"
+  },
+  {
+    "id": "ms3",
+    "method_id": "m3",
+    "question_id": "q1",
+    "stage": "Evaluation",
+    "description": "Evaluate the performance of DistilBERT on various NLP tasks.",
+    "inputs": [
+      "DistilBERT model"
+    ],
+    "outputs": [
+      "Evaluation metrics"
+    ],
+    "hyperparameters": [],
+    "loss": "N/A",
+    "optimizer": "N/A",
+    "learning_rate": "N/A",
+    "schedule": "N/A",
+    "objective": "To assess the model's performance on downstream tasks.",
+    "target_metric": "F1 score, accuracy",
+    "notes": "Evaluation is performed on standard NLP benchmarks.",
+    "depends_on": [
+      "ms1"
+    ],
+    "source_reference": "Section 4",
+    "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+  },
+  {
+    "id": "ms4",
+    "method_id": "m4",
+    "question_id": "q3",
+    "stage": "Distillation",
+    "description": "Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher.",
+    "inputs": [
+      "BERT model",
+      "training data"
+    ],
+    "outputs": [
+      "DistilBERT model"
+    ],
+    "hyperparameters": [
+      {
+        "name": "temperature",
+        "value": "2.0",
+        "description": "Temperature for softmax to control the smoothness of the output distribution."
+      },
+      {
+        "name": "batch_size",
+        "value": "4096",
+        "description": "Number of examples per batch during distillation."
+      }
+    ],
+    "loss": "L_{ce} + L_{mlm} + L_{cos}",
+    "optimizer": "AdamW",
+    "learning_rate": "5e-5",
+    "schedule": "linear",
+    "objective": "To effectively transfer knowledge from the teacher model to the student model.",
+    "target_metric": "Performance on downstream tasks",
+    "notes": "The distillation process leverages the teacher's output probabilities.",
+    "depends_on": [
+      "ms1"
+    ],
+    "source_reference": "Section 2",
+    "source_text": "The student is trained with a distillation loss over the soft target probabilities of the teacher."
+  },
+  {
+    "id": "ms5",
+    "method_id": "m5",
+    "question_id": "q4",
+    "stage": "Fine-tuning",
+    "description": "Fine-tune the DistilBERT model on specific downstream tasks.",
+    "inputs": [
+      "DistilBERT model",
+      "task-specific dataset"
+    ],
+    "outputs": [
+      "Fine-tuned DistilBERT model"
+    ],
+    "hyperparameters": [
+      {
+        "name": "learning_rate",
+        "value": "3e-5",
+        "description": "Learning rate for fine-tuning."
+      },
+      {
+        "name": "num_epochs",
+        "value": "3",
+        "description": "Number of epochs for fine-tuning."
+      }
+    ],
+    "loss": "Cross-entropy loss",
+    "optimizer": "AdamW",
+    "learning_rate": "3e-5",
+    "schedule": "linear",
+    "objective": "To adapt the pre-trained DistilBERT model to specific tasks.",
+    "target_metric": "Task-specific accuracy",
+    "notes": "Fine-tuning is performed on the task-specific dataset.",
+    "depends_on": [
+      "ms2",
+      "ms4"
+    ],
+    "source_reference": "Section 4.1",
+    "source_text": "We further study the performances of DistilBERT on several downstream tasks."
+  },
+  {
+    "id": "ms6",
+    "method_id": "m6",
+    "question_id": "q5",
+    "stage": "Ablation Study",
+    "description": "Conduct an ablation study to evaluate the impact of different components of the model.",
+    "inputs": [
+      "DistilBERT model",
+      "validation dataset"
+    ],
+    "outputs": [
+      "Ablation results"
+    ],
+    "hyperparameters": [],
+    "loss": "N/A",
+    "optimizer": "N/A",
+    "learning_rate": "N/A",
+    "schedule": "N/A",
+    "objective": "To determine the importance of each component in the model's performance.",
+    "target_metric": "GLUE macro-score",
+    "notes": "Variations are tested by removing components of the triple loss.",
+    "depends_on": [
+      "ms2",
+      "ms4"
+    ],
+    "source_reference": "Section 4.2",
+    "source_text": "We report the macro-score on GLUE and the deltas with the full triple loss."
+  }
+]

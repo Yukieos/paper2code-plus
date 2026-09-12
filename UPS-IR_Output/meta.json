@@ -1,0 +1,11 @@
+{
+  "title": "DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter",
+  "authors": [
+    "Victor SANH",
+    "Lysandre DEBUT",
+    "Julien CHAUMOND",
+    "Thomas WOLF"
+  ],
+  "venue": "Hugging Face",
+  "year": 2020
+}

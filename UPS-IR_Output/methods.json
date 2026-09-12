@@ -1,0 +1,67 @@
+[
+  {
+    "id": "m1",
+    "name": "DistilBERT Training Method",
+    "description": "A method to train DistilBERT using knowledge distillation and a triple loss combining language modeling, distillation, and cosine-distance losses.",
+    "architecture": "Transformer architecture with reduced layers and optimized operations.",
+    "uses_datasets": [
+      "d1"
+    ],
+    "uses_equations": [
+      "e1",
+      "e2"
+    ],
+    "source_reference": "Section 3",
+    "source_text": "the student - DistilBERT - has the same general architecture as BERT"
+  },
+  {
+    "id": "m2",
+    "name": "Hyperparameter Tuning: Tune hyperparameters to optimize DistilBERT's performance.",
+    "description": "Tune hyperparameters to optimize DistilBERT's performance.",
+    "architecture": "unknown",
+    "uses_datasets": [],
+    "uses_equations": [],
+    "source_reference": "Section 3",
+    "source_text": "We leverage knowledge distillation during the pre-training phase"
+  },
+  {
+    "id": "m3",
+    "name": "Evaluation: Evaluate the performance of DistilBERT on various NLP tasks.",
+    "description": "Evaluate the performance of DistilBERT on various NLP tasks.",
+    "architecture": "unknown",
+    "uses_datasets": [],
+    "uses_equations": [],
+    "source_reference": "Section 4",
+    "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+  },
+  {
+    "id": "m4",
+    "name": "Distillation: Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher.",
+    "description": "Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher.",
+    "architecture": "unknown",
+    "uses_datasets": [],
+    "uses_equations": [],
+    "source_reference": "Section 2",
+    "source_text": "The student is trained with a distillation loss over the soft target probabilities of the teacher."
+  },
+  {
+    "id": "m5",
+    "name": "Fine-tuning: Fine-tune the DistilBERT model on specific downstream tasks.",
+    "description": "Fine-tune the DistilBERT model on specific downstream tasks.",
+    "architecture": "unknown",
+    "uses_datasets": [],
+    "uses_equations": [],
+    "source_reference": "Section 4.1",
+    "source_text": "We further study the performances of DistilBERT on several downstream tasks."
+  },
+  {
+    "id": "m6",
+    "name": "Ablation Study: Conduct an ablation study to evaluate the impact of different components of the model.",
+    "description": "Conduct an ablation study to evaluate the impact of different components of the model.",
+    "architecture": "unknown",
+    "uses_datasets": [],
+    "uses_equations": [],
+    "source_reference": "Section 4.2",
+    "source_text": "We report the macro-score on GLUE and the deltas with the full triple loss."
+  }
+]

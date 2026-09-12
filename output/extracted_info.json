@@ -1,0 +1,592 @@
+{
+  "meta": {
+    "title": "DistilBERT, a distilled version of BERT: smaller, faster, cheaper and lighter",
+    "authors": [
+      "Victor SANH",
+      "Lysandre DEBUT",
+      "Julien CHAUMOND",
+      "Thomas WOLF"
+    ],
+    "venue": "Hugging Face",
+    "year": 2020
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "text": "How can we create a smaller, faster, and cheaper language model while retaining performance?",
+      "role": "primary",
+      "goal": "To develop DistilBERT, a distilled version of BERT.",
+      "parent": "q1",
+      "source_reference": "Abstract",
+      "source_text": "we propose a method to pre-train a smaller general-purpose language representation model, called DistilBERT"
+    },
+    {
+      "id": "q2",
+      "text": "What is the impact of knowledge distillation on model size and performance?",
+      "role": "sub",
+      "goal": "To evaluate the effectiveness of knowledge distillation in reducing model size while maintaining performance.",
+      "parent": "q1",
+      "source_reference": "Section 1",
+      "source_text": "we show that it is possible to reach similar performances on many downstream-tasks using much smaller language models"
+    },
+    {
+      "id": "q3",
+      "text": "What are the components of the triple loss used in training DistilBERT?",
+      "role": "sub",
+      "goal": "To analyze the contributions of each component of the triple loss.",
+      "parent": "q1",
+      "source_reference": "Section 1",
+      "source_text": "we introduce a triple loss combining language modeling, distillation and cosine-distance losses"
+    },
+    {
+      "id": "q4",
+      "text": "How does DistilBERT perform on various NLP tasks compared to BERT?",
+      "role": "sub",
+      "goal": "To compare the performance of DistilBERT with BERT on downstream tasks.",
+      "parent": "q1",
+      "source_reference": "Section 4",
+      "source_text": "DistilBERT is always on par or improving over the ELMo baseline"
+    },
+    {
+      "id": "q5",
+      "text": "What is the effect of different components of the triple loss on performance?",
+      "role": "sub",
+      "goal": "To conduct an ablation study on the triple loss components.",
+      "parent": "q3",
+      "source_reference": "Section 4.2",
+      "source_text": "we investigate the influence of various components of the triple loss"
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "name": "Model Training",
+      "description": "Training DistilBERT using knowledge distillation and a triple loss.",
+      "source_reference": "Section 3",
+      "source_text": "the student - DistilBERT - has the same general architecture as BERT"
+    },
+    {
+      "id": "t2",
+      "name": "Model Evaluation",
+      "description": "Evaluating DistilBERT on various NLP tasks to compare its performance with BERT.",
+      "source_reference": "Section 4",
+      "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+    },
+    {
+      "id": "t3",
+      "name": "Ablation Study",
+      "description": "Investigating the impact of different components of the triple loss on model performance.",
+      "source_reference": "Section 4.2",
+      "source_text": "we investigate the influence of various components of the triple loss"
+    }
+  ],
+  "methods": [
+    {
+      "id": "m1",
+      "name": "DistilBERT Training Method",
+      "description": "A method to train DistilBERT using knowledge distillation and a triple loss combining language modeling, distillation, and cosine-distance losses.",
+      "architecture": "Transformer architecture with reduced layers and optimized operations.",
+      "uses_datasets": [
+        "d1"
+      ],
+      "uses_equations": [
+        "e1",
+        "e2"
+      ],
+      "source_reference": "Section 3",
+      "source_text": "the student - DistilBERT - has the same general architecture as BERT"
+    }
+  ],
+  "method_steps": [
+    {
+      "id": "ms1",
+      "method_id": "m1",
+      "question_id": "q1",
+      "stage": "Pre-training",
+      "description": "Pre-train DistilBERT using knowledge distillation from a larger BERT model.",
+      "inputs": [
+        "d1"
+      ],
+      "outputs": [
+        "DistilBERT model"
+      ],
+      "hyperparameters": [
+        {
+          "name": "batch_size",
+          "value": "4096",
+          "description": "Number of examples per batch during training."
+        },
+        {
+          "name": "temperature",
+          "value": "unknown",
+          "description": "Temperature parameter for softmax during distillation."
+        }
+      ],
+      "loss": "L_{ce} + L_{mlm} + L_{cos}",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "To minimize the combined loss for effective training.",
+      "target_metric": "Performance on downstream tasks",
+      "notes": "The model is initialized from the teacher model.",
+      "depends_on": [],
+      "source_reference": "Section 3",
+      "source_text": "we introduce a triple loss combining language modeling, distillation and cosine-distance losses"
+    },
+    {
+      "id": "ms2",
+      "method_id": "m2",
+      "question_id": "q2",
+      "stage": "Hyperparameter Tuning",
+      "description": "Tune hyperparameters to optimize DistilBERT's performance.",
+      "inputs": [
+        "d1"
+      ],
+      "outputs": [
+        "Optimized DistilBERT model"
+      ],
+      "hyperparameters": [
+        {
+          "name": "learning_rate",
+          "value": "5e-5",
+          "description": "Learning rate for the optimizer."
+        },
+        {
+          "name": "dropout_rate",
+          "value": "0.1",
+          "description": "Dropout rate to prevent overfitting."
+        }
+      ],
+      "loss": "L_{ce} + L_{mlm} + L_{cos}",
+      "optimizer": "AdamW",
+      "learning_rate": "5e-5",
+      "schedule": "linear",
+      "objective": "To find the best hyperparameters for model performance.",
+      "target_metric": "Validation accuracy",
+      "notes": "Hyperparameters are tuned based on validation set performance.",
+      "depends_on": [
+        "ms1"
+      ],
+      "source_reference": "Section 3",
+      "source_text": "We leverage knowledge distillation during the pre-training phase"
+    },
+    {
+      "id": "ms3",
+      "method_id": "m3",
+      "question_id": "q1",
+      "stage": "Evaluation",
+      "description": "Evaluate the performance of DistilBERT on various NLP tasks.",
+      "inputs": [
+        "DistilBERT model"
+      ],
+      "outputs": [
+        "Evaluation metrics"
+      ],
+      "hyperparameters": [],
+      "loss": "N/A",
+      "optimizer": "N/A",
+      "learning_rate": "N/A",
+      "schedule": "N/A",
+      "objective": "To assess the model's performance on downstream tasks.",
+      "target_metric": "F1 score, accuracy",
+      "notes": "Evaluation is performed on standard NLP benchmarks.",
+      "depends_on": [
+        "ms1"
+      ],
+      "source_reference": "Section 4",
+      "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+    },
+    {
+      "id": "ms4",
+      "method_id": "m4",
+      "question_id": "q3",
+      "stage": "Distillation",
+      "description": "Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher.",
+      "inputs": [
+        "BERT model",
+        "training data"
+      ],
+      "outputs": [
+        "DistilBERT model"
+      ],
+      "hyperparameters": [
+        {
+          "name": "temperature",
+          "value": "2.0",
+          "description": "Temperature for softmax to control the smoothness of the output distribution."
+        },
+        {
+          "name": "batch_size",
+          "value": "4096",
+          "description": "Number of examples per batch during distillation."
+        }
+      ],
+      "loss": "L_{ce} + L_{mlm} + L_{cos}",
+      "optimizer": "AdamW",
+      "learning_rate": "5e-5",
+      "schedule": "linear",
+      "objective": "To effectively transfer knowledge from the teacher model to the student model.",
+      "target_metric": "Performance on downstream tasks",
+      "notes": "The distillation process leverages the teacher's output probabilities.",
+      "depends_on": [
+        "ms1"
+      ],
+      "source_reference": "Section 2",
+      "source_text": "The student is trained with a distillation loss over the soft target probabilities of the teacher."
+    },
+    {
+      "id": "ms5",
+      "method_id": "m5",
+      "question_id": "q4",
+      "stage": "Fine-tuning",
+      "description": "Fine-tune the DistilBERT model on specific downstream tasks.",
+      "inputs": [
+        "DistilBERT model",
+        "task-specific dataset"
+      ],
+      "outputs": [
+        "Fine-tuned DistilBERT model"
+      ],
+      "hyperparameters": [
+        {
+          "name": "learning_rate",
+          "value": "3e-5",
+          "description": "Learning rate for fine-tuning."
+        },
+        {
+          "name": "num_epochs",
+          "value": "3",
+          "description": "Number of epochs for fine-tuning."
+        }
+      ],
+      "loss": "Cross-entropy loss",
+      "optimizer": "AdamW",
+      "learning_rate": "3e-5",
+      "schedule": "linear",
+      "objective": "To adapt the pre-trained DistilBERT model to specific tasks.",
+      "target_metric": "Task-specific accuracy",
+      "notes": "Fine-tuning is performed on the task-specific dataset.",
+      "depends_on": [
+        "ms2",
+        "ms4"
+      ],
+      "source_reference": "Section 4.1",
+      "source_text": "We further study the performances of DistilBERT on several downstream tasks."
+    },
+    {
+      "id": "ms6",
+      "method_id": "m6",
+      "question_id": "q5",
+      "stage": "Ablation Study",
+      "description": "Conduct an ablation study to evaluate the impact of different components of the model.",
+      "inputs": [
+        "DistilBERT model",
+        "validation dataset"
+      ],
+      "outputs": [
+        "Ablation results"
+      ],
+      "hyperparameters": [],
+      "loss": "N/A",
+      "optimizer": "N/A",
+      "learning_rate": "N/A",
+      "schedule": "N/A",
+      "objective": "To determine the importance of each component in the model's performance.",
+      "target_metric": "GLUE macro-score",
+      "notes": "Variations are tested by removing components of the triple loss.",
+      "depends_on": [
+        "ms2",
+        "ms4"
+      ],
+      "source_reference": "Section 4.2",
+      "source_text": "We report the macro-score on GLUE and the deltas with the full triple loss."
+    }
+  ],
+  "graphs": [
+    {
+      "id": "g1",
+      "name": "DistilBERT Training Pipeline",
+      "description": "Overview of the training process for DistilBERT using knowledge distillation.",
+      "focus": "Training",
+      "nodes": [
+        "q1",
+        "m1",
+        "ms1",
+        "q2",
+        "m2",
+        "ms2",
+        "m3"
+      ],
+      "edges": [
+        {
+          "from": "q1",
+          "to": "m1",
+          "type": "answers",
+          "description": "The method addresses the primary research question."
+        },
+        {
+          "from": "m1",
+          "to": "ms1",
+          "type": "supervises",
+          "description": "The method defines the steps for training."
+        },
+        {
+          "from": "q2",
+          "to": "m2",
+          "type": "answers",
+          "description": "The method explores the impact of different hyperparameters."
+        },
+        {
+          "from": "m2",
+          "to": "ms2",
+          "type": "supervises",
+          "description": "The method outlines the hyperparameter tuning process."
+        },
+        {
+          "from": "m1",
+          "to": "m3",
+          "type": "supports",
+          "description": "The training method supports the evaluation of model performance."
+        }
+      ],
+      "source_reference": "Section 3",
+      "source_text": "we propose a method to pre-train a smaller general-purpose language representation model"
+    },
+    {
+      "id": "g2",
+      "name": "DistilBERT Evaluation Pipeline",
+      "description": "Evaluation of DistilBERT on various NLP tasks.",
+      "focus": "Evaluation",
+      "nodes": [
+        "q4",
+        "t2",
+        "q3",
+        "t1",
+        "t4"
+      ],
+      "edges": [
+        {
+          "from": "q4",
+          "to": "t2",
+          "type": "answers",
+          "description": "The task evaluates the performance of DistilBERT."
+        },
+        {
+          "from": "q3",
+          "to": "t1",
+          "type": "answers",
+          "description": "The task assesses the model's efficiency on edge devices."
+        },
+        {
+          "from": "q4",
+          "to": "t4",
+          "type": "answers",
+          "description": "The task compares DistilBERT with other models."
+        }
+      ],
+      "source_reference": "Section 4",
+      "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+    },
+    {
+      "id": "g3",
+      "name": "Ablation Study Pipeline",
+      "description": "Ablation study on the components of the triple loss.",
+      "focus": "Ablation Study",
+      "nodes": [
+        "q5",
+        "t3",
+        "q6",
+        "t5",
+        "t6"
+      ],
+      "edges": [
+        {
+          "from": "q5",
+          "to": "t3",
+          "type": "answers",
+          "description": "The task investigates the impact of loss components."
+        },
+        {
+          "from": "q6",
+          "to": "t5",
+          "type": "answers",
+          "description": "The task examines the effect of initialization on performance."
+        },
+        {
+          "from": "q5",
+          "to": "t6",
+          "type": "answers",
+          "description": "The task analyzes the significance of each loss component."
+        }
+      ],
+      "source_reference": "Section 4.2",
+      "source_text": "we investigate the influence of various components of the triple loss"
+    }
+  ],
+  "experiments": [
+    {
+      "method": "m1",
+      "dataset": "d1",
+      "setup": "Fine-tuning DistilBERT on the GLUE benchmark.",
+      "metrics": [
+        {
+          "name": "GLUE Macro Score",
+          "value": 77.0,
+          "unit": "points"
+        }
+      ],
+      "source_reference": "Table 1",
+      "source_text": "DistilBERT retains 97% of BERT performance"
+    }
+  ],
+  "relations": [
+    {
+      "from": "q1",
+      "to": "q2",
+      "type": "refines",
+      "rationale": "Understanding the impact of distillation is crucial for the main question.",
+      "source_reference": "Section 1"
+    },
+    {
+      "from": "q1",
+      "to": "q3",
+      "type": "refines",
+      "rationale": "Analyzing the triple loss components is essential for the main question.",
+      "source_reference": "Section 1"
+    },
+    {
+      "from": "q1",
+      "to": "q4",
+      "type": "refines",
+      "rationale": "Comparing performance with BERT is a key aspect of the main question.",
+      "source_reference": "Section 1"
+    },
+    {
+      "from": "q3",
+      "to": "q5",
+      "type": "refines",
+      "rationale": "The ablation study focuses on the components of the triple loss.",
+      "source_reference": "Section 4.2"
+    }
+  ],
+  "datasets": [
+    {
+      "id": "d1",
+      "name": "English Wikipedia and Toronto Book Corpus",
+      "split": "train",
+      "description": "The corpus used for training DistilBERT.",
+      "source_reference": "Section 3",
+      "source_text": "We train DistilBERT on the same corpus as the original BERT model"
+    }
+  ],
+  "equations": [
+    {
+      "id": "e1",
+      "latex": "L_{ce} = \\sum_{i} t_{i} * \\log(s_{i})",
+      "units": "unknown",
+      "description": "Cross-entropy loss for distillation.",
+      "source_reference": "Section 2",
+      "source_text": "The student is trained with a distillation loss over the soft target probabilities of the teacher"
+    },
+    {
+      "id": "e2",
+      "latex": "p_{i} = \\frac{\\exp(z_{i}/T)}{\\sum_{j} \\exp(z_{j}/T)}",
+      "units": "unknown",
+      "description": "Softmax temperature function.",
+      "source_reference": "Section 2",
+      "source_text": "we used a softmax-temperature"
+    }
+  ],
+  "training_pipeline": [],
+  "optimizations": [],
+  "parameters": [],
+  "losses": [],
+  "sections": [
+    {
+      "id": "s1",
+      "title": "Abstract",
+      "level": 1,
+      "summary": "Introduction of DistilBERT and its advantages over BERT.",
+      "key_points": [
+        "DistilBERT is smaller, faster, and cheaper.",
+        "Retains 97% of BERT's performance."
+      ],
+      "source_reference": "Abstract",
+      "source_text": "we propose a method to pre-train a smaller general-purpose language representation model"
+    },
+    {
+      "id": "s2",
+      "title": "1 Introduction",
+      "level": 1,
+      "summary": "Discussion on the rise of transfer learning in NLP and the challenges of large models.",
+      "key_points": [
+        "Large models improve performance but are costly.",
+        "Need for smaller models for on-device applications."
+      ],
+      "source_reference": "Section 1",
+      "source_text": "we show that it is possible to reach similar performances on many downstream-tasks"
+    },
+    {
+      "id": "s3",
+      "title": "2 Knowledge distillation",
+      "level": 1,
+      "summary": "Explanation of knowledge distillation and its application in training DistilBERT.",
+      "key_points": [
+        "Distillation compresses models by training a student to mimic a teacher.",
+        "Triple loss combines multiple objectives."
+      ],
+      "source_reference": "Section 2",
+      "source_text": "Knowledge distillation is a compression technique"
+    },
+    {
+      "id": "s4",
+      "title": "3 DistilBERT: a distilled version of BERT",
+      "level": 1,
+      "summary": "Details on the architecture and training of DistilBERT.",
+      "key_points": [
+        "DistilBERT has fewer layers than BERT.",
+        "Initialized from the teacher model."
+      ],
+      "source_reference": "Section 3",
+      "source_text": "the student - DistilBERT - has the same general architecture as BERT"
+    },
+    {
+      "id": "s5",
+      "title": "4 Experiments",
+      "level": 1,
+      "summary": "Evaluation of DistilBERT on various NLP tasks and comparison with BERT.",
+      "key_points": [
+        "DistilBERT performs comparably to BERT.",
+        "Ablation studies highlight the importance of loss components."
+      ],
+      "source_reference": "Section 4",
+      "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+    },
+    {
+      "id": "s6",
+      "title": "5 Related work",
+      "level": 1,
+      "summary": "Overview of related research in model distillation and compression.",
+      "key_points": [
+        "Focus on task-specific distillation in prior works.",
+        "Multi-distillation approaches are also discussed."
+      ],
+      "source_reference": "Section 5",
+      "source_text": "Most of the prior works focus on building task-specific distillation setups"
+    },
+    {
+      "id": "s7",
+      "title": "6 Conclusion and future work",
+      "level": 1,
+      "summary": "Summary of findings and future directions for research.",
+      "key_points": [
+        "DistilBERT is a viable option for edge applications.",
+        "Further research on distillation techniques is needed."
+      ],
+      "source_reference": "Section 6",
+      "source_text": "We introduced DistilBERT, a general-purpose pre-trained version of BERT"
+    }
+  ],
+  "figures": [],
+  "algorithms": []
+}

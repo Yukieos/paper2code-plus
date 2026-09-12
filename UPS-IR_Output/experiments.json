@@ -1,0 +1,16 @@
+[
+  {
+    "method": "m1",
+    "dataset": "d1",
+    "setup": "Fine-tuning DistilBERT on the GLUE benchmark.",
+    "metrics": [
+      {
+        "name": "GLUE Macro Score",
+        "value": 77.0,
+        "unit": "points"
+      }
+    ],
+    "source_reference": "Table 1",
+    "source_text": "DistilBERT retains 97% of BERT performance"
+  }
+]

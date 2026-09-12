@@ -1,0 +1,10 @@
+[
+  {
+    "id": "d1",
+    "name": "English Wikipedia and Toronto Book Corpus",
+    "split": "train",
+    "description": "The corpus used for training DistilBERT.",
+    "source_reference": "Section 3",
+    "source_text": "We train DistilBERT on the same corpus as the original BERT model"
+  }
+]

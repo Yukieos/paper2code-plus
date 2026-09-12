@@ -1,0 +1,133 @@
+{
+  "/Users/christinayou/paper2code-1/generated_repo2/data/loaders.py": {
+    "lint": {
+      "passed": false,
+      "errors": [
+        "/Users/christinayou/paper2code-1/generated_repo2/data/loaders.py:12:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/data/loaders.py:127:67: W292 no newline at end of file"
+      ]
+    },
+    "type_check": {
+      "passed": true,
+      "errors": []
+    },
+    "syntax": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "/Users/christinayou/paper2code-1/generated_repo2/main.py": {
+    "lint": {
+      "passed": false,
+      "errors": [
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:4:1: F401 'os' imported but unused",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:5:1: F401 'pandas as pd' imported but unused",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:15:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:30:5: F841 local variable 'tokenizer' is assigned to but never used",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:37:79: W291 trailing whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:38:60: W291 trailing whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:39:57: W291 trailing whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:51:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:61:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:69:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:76:22: F821 undefined name 'tokenizer'",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:85:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:92:22: F821 undefined name 'tokenizer'",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:107:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:116:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:128:1: E305 expected 2 blank lines after class or function definition, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/main.py:129:75: W292 no newline at end of file"
+      ]
+    },
+    "type_check": {
+      "passed": true,
+      "errors": []
+    },
+    "syntax": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py": {
+    "lint": {
+      "passed": false,
+      "errors": [
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:4:1: F401 'torch.utils.data.DataLoader' imported but unused",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:5:1: F401 'transformers.DistilBertTokenizer' imported but unused",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:9:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:16:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:21:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:25:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:30:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:39:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:42:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:48:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:51:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:58:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:62:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:65:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/models/distilbert.py:72:52: W292 no newline at end of file"
+      ]
+    },
+    "type_check": {
+      "passed": true,
+      "errors": []
+    },
+    "syntax": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "/Users/christinayou/paper2code-1/generated_repo2/training/train.py": {
+    "lint": {
+      "passed": false,
+      "errors": [
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:1:1: F401 'os' imported but unused",
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:6:121: E501 line too long (121 > 120 characters)",
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:13:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:16:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:56:121: E501 line too long (124 > 120 characters)",
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:79:1: E305 expected 2 blank lines after class or function definition, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/training/train.py:88:18: W292 no newline at end of file"
+      ]
+    },
+    "type_check": {
+      "passed": true,
+      "errors": []
+    },
+    "syntax": {
+      "passed": true,
+      "errors": []
+    }
+  },
+  "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py": {
+    "lint": {
+      "passed": false,
+      "errors": [
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:1:1: F401 'os' imported but unused",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:13:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:22:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:32:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:35:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:44:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:51:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:55:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:64:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:78:1: E302 expected 2 blank lines, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:81:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:84:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:115:1: E305 expected 2 blank lines after class or function definition, found 1",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:132:1: W293 blank line contains whitespace",
+        "/Users/christinayou/paper2code-1/generated_repo2/evaluation/evaluate.py:133:21: W292 no newline at end of file"
+      ]
+    },
+    "type_check": {
+      "passed": true,
+      "errors": []
+    },
+    "syntax": {
+      "passed": true,
+      "errors": []
+    }
+  }
+}

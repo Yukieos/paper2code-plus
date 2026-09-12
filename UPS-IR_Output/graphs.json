@@ -1,0 +1,242 @@
+[
+  {
+    "id": "g1",
+    "name": "DistilBERT Training Pipeline",
+    "description": "Overview of the training process for DistilBERT using knowledge distillation.",
+    "focus": "Training",
+    "nodes": [
+      "q1",
+      "m1",
+      "ms1",
+      "q2",
+      "m2",
+      "ms2",
+      "m3"
+    ],
+    "edges": [
+      {
+        "from": "q1",
+        "to": "m1",
+        "type": "answers",
+        "description": "The method addresses the primary research question."
+      },
+      {
+        "from": "m1",
+        "to": "ms1",
+        "type": "supervises",
+        "description": "The method defines the steps for training."
+      },
+      {
+        "from": "q2",
+        "to": "m2",
+        "type": "answers",
+        "description": "The method explores the impact of different hyperparameters."
+      },
+      {
+        "from": "m2",
+        "to": "ms2",
+        "type": "supervises",
+        "description": "The method outlines the hyperparameter tuning process."
+      },
+      {
+        "from": "m1",
+        "to": "m3",
+        "type": "supports",
+        "description": "The training method supports the evaluation of model performance."
+      }
+    ],
+    "source_reference": "Section 3",
+    "source_text": "we propose a method to pre-train a smaller general-purpose language representation model"
+  },
+  {
+    "id": "g2",
+    "name": "DistilBERT Evaluation Pipeline",
+    "description": "Evaluation of DistilBERT on various NLP tasks.",
+    "focus": "Evaluation",
+    "nodes": [
+      "q4",
+      "t2",
+      "q3",
+      "t1"
+    ],
+    "edges": [
+      {
+        "from": "q4",
+        "to": "t2",
+        "type": "answers",
+        "description": "The task evaluates the performance of DistilBERT."
+      },
+      {
+        "from": "q3",
+        "to": "t1",
+        "type": "answers",
+        "description": "The task assesses the model's efficiency on edge devices."
+      }
+    ],
+    "source_reference": "Section 4",
+    "source_text": "We assess the language understanding and generalization capabilities of DistilBERT"
+  },
+  {
+    "id": "g3",
+    "name": "Ablation Study Pipeline",
+    "description": "Ablation study on the components of the triple loss.",
+    "focus": "Ablation Study",
+    "nodes": [
+      "q5",
+      "t3"
+    ],
+    "edges": [
+      {
+        "from": "q5",
+        "to": "t3",
+        "type": "answers",
+        "description": "The task investigates the impact of loss components."
+      }
+    ],
+    "source_reference": "Section 4.2",
+    "source_text": "we investigate the influence of various components of the triple loss"
+  },
+  {
+    "name": "UPS-IR Method Flow",
+    "description": "Auto-generated DAG linking questions, methods, and method steps for traceability.",
+    "focus": "auto-flow",
+    "nodes": [
+      "m1",
+      "m2",
+      "m3",
+      "m4",
+      "m5",
+      "m6",
+      "ms1",
+      "ms2",
+      "ms3",
+      "ms4",
+      "ms5",
+      "ms6",
+      "q1",
+      "q2",
+      "q3",
+      "q4",
+      "q5"
+    ],
+    "edges": [
+      {
+        "from": "m1",
+        "to": "ms1",
+        "type": "implements",
+        "description": "DistilBERT Training Method -> Pre-train DistilBERT using knowledge distillation from a larger BERT model. (implements)"
+      },
+      {
+        "from": "q1",
+        "to": "m1",
+        "type": "addresses",
+        "description": "How can we create a smaller, faster, and cheaper language model while retaining performance? -> DistilBERT Training Method (addresses)"
+      },
+      {
+        "from": "m2",
+        "to": "ms2",
+        "type": "implements",
+        "description": "Hyperparameter Tuning: Tune hyperparameters to optimize DistilBERT's performance. -> Tune hyperparameters to optimize DistilBERT's performance. (implements)"
+      },
+      {
+        "from": "q2",
+        "to": "m2",
+        "type": "addresses",
+        "description": "What is the impact of knowledge distillation on model size and performance? -> Hyperparameter Tuning: Tune hyperparameters to optimize DistilBERT's performance. (addresses)"
+      },
+      {
+        "from": "ms1",
+        "to": "ms2",
+        "type": "depends_on",
+        "description": "Pre-train DistilBERT using knowledge distillation from a larger BERT model. -> Tune hyperparameters to optimize DistilBERT's performance. (depends_on)"
+      },
+      {
+        "from": "m3",
+        "to": "ms3",
+        "type": "implements",
+        "description": "Evaluation: Evaluate the performance of DistilBERT on various NLP tasks. -> Evaluate the performance of DistilBERT on various NLP tasks. (implements)"
+      },
+      {
+        "from": "q1",
+        "to": "m3",
+        "type": "addresses",
+        "description": "How can we create a smaller, faster, and cheaper language model while retaining performance? -> Evaluation: Evaluate the performance of DistilBERT on various NLP tasks. (addresses)"
+      },
+      {
+        "from": "ms1",
+        "to": "ms3",
+        "type": "depends_on",
+        "description": "Pre-train DistilBERT using knowledge distillation from a larger BERT model. -> Evaluate the performance of DistilBERT on various NLP tasks. (depends_on)"
+      },
+      {
+        "from": "m4",
+        "to": "ms4",
+        "type": "implements",
+        "description": "Distillation: Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher. -> Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher. (implements)"
+      },
+      {
+        "from": "q3",
+        "to": "m4",
+        "type": "addresses",
+        "description": "What are the components of the triple loss used in training DistilBERT? -> Distillation: Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher. (addresses)"
+      },
+      {
+        "from": "ms1",
+        "to": "ms4",
+        "type": "depends_on",
+        "description": "Pre-train DistilBERT using knowledge distillation from a larger BERT model. -> Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher. (depends_on)"
+      },
+      {
+        "from": "m5",
+        "to": "ms5",
+        "type": "implements",
+        "description": "Fine-tuning: Fine-tune the DistilBERT model on specific downstream tasks. -> Fine-tune the DistilBERT model on specific downstream tasks. (implements)"
+      },
+      {
+        "from": "q4",
+        "to": "m5",
+        "type": "addresses",
+        "description": "How does DistilBERT perform on various NLP tasks compared to BERT? -> Fine-tuning: Fine-tune the DistilBERT model on specific downstream tasks. (addresses)"
+      },
+      {
+        "from": "ms2",
+        "to": "ms5",
+        "type": "depends_on",
+        "description": "Tune hyperparameters to optimize DistilBERT's performance. -> Fine-tune the DistilBERT model on specific downstream tasks. (depends_on)"
+      },
+      {
+        "from": "ms4",
+        "to": "ms5",
+        "type": "depends_on",
+        "description": "Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher. -> Fine-tune the DistilBERT model on specific downstream tasks. (depends_on)"
+      },
+      {
+        "from": "m6",
+        "to": "ms6",
+        "type": "implements",
+        "description": "Ablation Study: Conduct an ablation study to evaluate the impact of different components of the model. -> Conduct an ablation study to evaluate the impact of different components of the model. (implements)"
+      },
+      {
+        "from": "q5",
+        "to": "m6",
+        "type": "addresses",
+        "description": "What is the effect of different components of the triple loss on performance? -> Ablation Study: Conduct an ablation study to evaluate the impact of different components of the model. (addresses)"
+      },
+      {
+        "from": "ms2",
+        "to": "ms6",
+        "type": "depends_on",
+        "description": "Tune hyperparameters to optimize DistilBERT's performance. -> Conduct an ablation study to evaluate the impact of different components of the model. (depends_on)"
+      },
+      {
+        "from": "ms4",
+        "to": "ms6",
+        "type": "depends_on",
+        "description": "Apply knowledge distillation to train DistilBERT using a larger BERT model as a teacher. -> Conduct an ablation study to evaluate the impact of different components of the model. (depends_on)"
+      }
+    ],
+    "source_reference": "Abstract; Section 1; Section 2; Section 3; Section 4; Section 4.1; Section 4.2",
+    "source_text": "Derived automatically from structured UPS-IR fields to enrich the pipeline view.",
+    "id": "g4"
+  }
+]

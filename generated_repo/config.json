@@ -1,0 +1,117 @@
+{
+  "notes": "Fill null values with paper-sourced or experimental settings before running main.py.",
+  "global": {
+    "batch_size": {
+      "value": "4096",
+      "description": "Batch size affects training stability and speed.",
+      "risk": "medium",
+      "defined_in_paper": true
+    },
+    "learning_rate": {
+      "value": null,
+      "description": "Learning rate is crucial for model convergence.",
+      "risk": "high",
+      "defined_in_paper": false
+    },
+    "temperature": {
+      "value": null,
+      "description": "Temperature controls the smoothness of the output distribution during distillation.",
+      "risk": "high",
+      "defined_in_paper": false
+    },
+    "num_epochs": {
+      "value": null,
+      "description": "Number of epochs affects overfitting and training time.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "checkpoint_path": {
+      "value": null,
+      "description": "Path to load model checkpoints from training phase.",
+      "risk": "high",
+      "defined_in_paper": false
+    },
+    "evaluation_datasets": {
+      "value": ["validation", "test"],
+      "description": "Datasets to run evaluation on.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "results_format": {
+      "value": "json",
+      "description": "Format to save evaluation results.",
+      "risk": "low",
+      "defined_in_paper": false
+    },
+    "visualization": {
+      "value": true,
+      "description": "Generate visualizations for evaluation metrics if mentioned in the paper.",
+      "risk": "low",
+      "defined_in_paper": false
+    },
+    "logging": {
+      "value": true,
+      "description": "Enable logging for error handling and tracking.",
+      "risk": "low",
+      "defined_in_paper": false
+    }
+  },
+  "modules": {
+    "main.py": {
+      "batch_size": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      },
+      "learning_rate": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "num_epochs": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "temperature": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "checkpoint_path": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "evaluation_datasets": {
+        "value": ["validation", "test"],
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "results_format": {
+        "value": "json",
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "visualization": {
+        "value": true,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "logging": {
+        "value": true,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      }
+    }
+  }
+}
