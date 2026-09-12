@@ -46,6 +46,21 @@
       "category": "lint_violation",
       "file": "utils.py",
       "detail": "line 7:F401 'os' imported but unused"
+    },
+    {
+      "category": "semantic_issue",
+      "file": "evaluation.py",
+      "detail": "[critical] The 'Generator' class in 'evaluation.py' has a 'forward' method that does nothing (it is a placeholder). This will cause the generator to not produce any output when called, leading to silent failures during evaluation."
+    },
+    {
+      "category": "semantic_issue",
+      "file": "main.py",
+      "detail": "[critical] The 'evaluate' function in 'main.py' is called with a 'data_loader' that is not properly initialized (it is commented out). This will lead to a runtime error when trying to evaluate the model."
+    },
+    {
+      "category": "semantic_issue",
+      "file": "training.py",
+      "detail": "[critical] The 'train' function in 'training.py' does not call 'backward()' on the generator's loss, which means the generator will not be updated during training, leading to ineffective training."
     }
   ]
 }

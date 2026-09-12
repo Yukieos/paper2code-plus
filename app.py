@@ -17,7 +17,7 @@ from pathlib import Path
 import streamlit as st
 
 from dag import flow_reasoning_to_mermaid
-from verify import verify
+from verify import semantic_review, verify
 
 REPO_ROOT = Path(__file__).resolve().parent
 RUNS_DIR = REPO_ROOT / "runs"
@@ -282,7 +282,14 @@ with tab_run:
                     )
 
                     st.subheader("Verification results")
-                    show_verification(verify(repo_dir).to_dict())
+                    report = verify(repo_dir)
+                    with st.spinner("Running LLM semantic review (checks for bugs static analysis can't see)..."):
+                        def _llm_call(prompt: str) -> str:
+                            from langchain_openai import ChatOpenAI
+                            return ChatOpenAI(model=model, temperature=0, api_key=api_key).invoke(prompt).content
+
+                        report.findings.extend(semantic_review(repo_dir, llm_call=_llm_call))
+                    show_verification(report.to_dict())
 
 with tab_history:
     jobs = sorted((p for p in RUNS_DIR.iterdir() if p.is_dir()), reverse=True)

@@ -21,6 +21,11 @@
       "category": "lint_violation",
       "file": "utils.py",
       "detail": "line 1:F401 'numpy as np' imported but unused"
+    },
+    {
+      "category": "semantic_issue",
+      "file": "main.py",
+      "detail": "[critical] The evaluate function is called with 'dataset' instead of 'test_loader', which will lead to a runtime error since 'dataset' is not a DataLoader."
     }
   ]
 }

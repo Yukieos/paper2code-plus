@@ -16,6 +16,16 @@
       "category": "lint_violation",
       "file": "main.py",
       "detail": "line 6:F401 'models.tiny_conv_net.validate_model' imported but unused"
+    },
+    {
+      "category": "semantic_issue",
+      "file": "main.py",
+      "detail": "[critical] The 'evaluate_model' function is called with an incorrect number of arguments. It expects two arguments (model and test_loader), but is called with five arguments (model, test_loader, accuracy, confusion_matrix, precision, recall, f1_score) on line 30."
+    },
+    {
+      "category": "semantic_issue",
+      "file": "models/tiny_conv_net.py",
+      "detail": "[critical] The 'train_model' function is defined with a 'val_loader' parameter, but it is not passed when called in 'main.py'. This will lead to a TypeError."
     }
   ]
 }
