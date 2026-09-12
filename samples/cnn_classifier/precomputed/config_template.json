@@ -3,86 +3,94 @@
   "global": {
     "learning_rate": {
       "value": "1e-3",
-      "description": "Standard learning rate for Adam optimizer.",
-      "risk": "low",
+      "description": "Common practice for tuning learning rates in training neural networks.",
+      "risk": "medium",
       "defined_in_paper": true
     },
     "batch_size": {
       "value": "64",
-      "description": "Common batch size for training.",
-      "risk": "low",
+      "description": "Batch size affects training stability and speed.",
+      "risk": "medium",
       "defined_in_paper": true
     },
     "epochs": {
       "value": "5",
-      "description": "Number of epochs for training.",
-      "risk": "low",
+      "description": "Number of epochs is crucial for model convergence.",
+      "risk": "medium",
       "defined_in_paper": true
     },
     "seed": {
       "value": null,
-      "description": "To ensure reproducibility of results.",
-      "risk": "medium",
+      "description": "Seed for reproducibility of results.",
+      "risk": "low",
       "defined_in_paper": false
     },
-    "data_augmentation": {
+    "config_path": {
       "value": null,
-      "description": "Whether to apply data augmentation techniques during training.",
+      "description": "Path to the configuration file.",
       "risk": "low",
       "defined_in_paper": false
     }
   },
   "modules": {
     "main.py": {
-      "learning_rate": {
+      "config_path": {
         "value": null,
-        "description": "",
-        "risk": "low",
-        "defined_in_paper": true
-      },
-      "batch_size": {
-        "value": null,
-        "description": "",
-        "risk": "low",
-        "defined_in_paper": true
-      },
-      "epochs": {
-        "value": null,
-        "description": "",
-        "risk": "low",
-        "defined_in_paper": true
-      },
-      "seed": {
-        "value": null,
-        "description": "",
+        "description": "Path to the configuration file.",
         "risk": "low",
         "defined_in_paper": false
       },
-      "data_augmentation": {
+      "seed": {
         "value": null,
-        "description": "",
+        "description": "Seed for reproducibility of results.",
         "risk": "low",
         "defined_in_paper": false
       }
     },
-    "training/train.py": {
-      "learning_rate": {
+    "training.py": {
+      "model": {
         "value": null,
-        "description": "",
-        "risk": "low",
-        "defined_in_paper": true
+        "description": "Model to be trained.",
+        "risk": "medium",
+        "defined_in_paper": false
       },
-      "batch_size": {
+      "train_loader": {
         "value": null,
-        "description": "",
-        "risk": "low",
-        "defined_in_paper": true
+        "description": "DataLoader for training data.",
+        "risk": "medium",
+        "defined_in_paper": false
+      },
+      "criterion": {
+        "value": null,
+        "description": "Loss function to use during training.",
+        "risk": "medium",
+        "defined_in_paper": false
+      },
+      "optimizer": {
+        "value": null,
+        "description": "Optimizer for updating model weights.",
+        "risk": "medium",
+        "defined_in_paper": false
       },
       "epochs": {
         "value": null,
-        "description": "",
-        "risk": "low",
-        "defined_in_paper": true
+        "description": "Number of epochs to train.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "evaluation.py": {
+      "model": {
+        "value": null,
+        "description": "Model to be evaluated.",
+        "risk": "medium",
+        "defined_in_paper": false
+      },
+      "test_loader": {
+        "value": null,
+        "description": "DataLoader for test data.",
+        "risk": "medium",
+        "defined_in_paper": false
       }
     }
   }

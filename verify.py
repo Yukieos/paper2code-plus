@@ -68,7 +68,13 @@ def _has_empty_main_block(tree: ast.Module) -> bool:
             and isinstance(node.test, ast.Compare)
             and isinstance(node.test.left, ast.Name) and node.test.left.id == "__name__"
         )
-        if is_main_guard and all(isinstance(stmt, ast.Expr) for stmt in node.body):
+        if not is_main_guard or not node.body:
+            continue
+        # A no-op block is one where every statement is a bare constant
+        # expression (a string used as a comment, or `...`) — NOT any
+        # ast.Expr, since a normal `main()` call is *also* an Expr statement
+        # and must not be flagged here.
+        if all(isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant) for stmt in node.body):
             return True
     return False
 
@@ -118,10 +124,15 @@ def verify(repo_dir: Path) -> VerificationReport:
                                                 f"imports '{module}', which isn't stdlib, a listed "
                                                 "dependency, or a local file."))
 
+    report.findings.extend(_flake8_findings(repo_dir))
     return report
 
 
-def run_flake8(repo_dir: Path) -> list[str]:
+def _flake8_findings(repo_dir: Path) -> list[Finding]:
+    """flake8 --select=F catches things AST-walking above doesn't: undefined
+    names (F821 — e.g. a type hint referencing an unimported symbol), unused
+    imports/variables, redefinitions, etc.
+    """
     try:
         result = subprocess.run(
             [sys.executable, "-m", "flake8", "--select=F", str(repo_dir)],
@@ -129,7 +140,22 @@ def run_flake8(repo_dir: Path) -> list[str]:
         )
     except (FileNotFoundError, subprocess.TimeoutExpired):
         return []
-    return [line for line in result.stdout.splitlines() if line.strip()]
+
+    findings = []
+    for line in result.stdout.splitlines():
+        if not line.strip():
+            continue
+        # "<path>:<line>:<col>: <code> <message>"
+        parts = line.split(":", 3)
+        if len(parts) != 4:
+            continue
+        path_str, line_no, _col, message = parts
+        try:
+            rel = str(Path(path_str).resolve().relative_to(repo_dir.resolve()))
+        except ValueError:
+            rel = path_str
+        findings.append(Finding("lint_violation", rel, f"line {line_no}:{message.strip()}"))
+    return findings
 
 
 if __name__ == "__main__":

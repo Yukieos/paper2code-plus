@@ -1,26 +1,15 @@
 flowchart TD
-  s1["s1: Initialize the training environment and set random seed for…"]
-  s2["s2: Load the dataset for training using the data loader."]
-  s3["s3: Initialize the generator model based on the architecture de…"]
-  s4["s4: Initialize the discriminator model based on the architectur…"]
-  s5["s5: Set up the optimizer for training the models."]
-  s6["s6: Begin the training loop for the MiniGAN."]
-  s7["s7: Calculate the loss using the Binary Cross-Entropy Loss func…"]
-  s8["s8: Update the models based on the calculated loss."]
-  s9["s9: Evaluate the models after training using the evaluation met…"]
-  s10["s10: Save the trained models for future use."]
-  random_seed --> s2
-  generator --> s5
-  discriminator --> s5
-  training_data --> s6
-  generator --> s6
-  discriminator --> s6
-  optimizer --> s6
-  generator_model --> s7
-  discriminator_model --> s7
-  loss --> s8
-  optimizer --> s8
-  updated_generator --> s9
-  updated_discriminator --> s9
-  updated_generator --> s10
-  updated_discriminator --> s10
+  s1["s1: Initialize the MiniGAN model and set up the environment."]
+  s2["s2: Load the dataset for training the MiniGAN model."]
+  s3["s3: Define the generator and discriminator architectures."]
+  s4["s4: Train the MiniGAN model using the defined loss function and…"]
+  s5["s5: Evaluate the trained MiniGAN model using specified metrics."]
+  s6["s6: Log the training and evaluation results for analysis."]
+  model_initialized --> s2
+  train_loader --> s3
+  generator --> s4
+  discriminator --> s4
+  train_loader --> s4
+  generator_trained --> s5
+  discriminator_trained --> s5
+  evaluation_results --> s6

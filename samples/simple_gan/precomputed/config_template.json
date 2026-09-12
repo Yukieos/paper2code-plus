@@ -3,68 +3,62 @@
   "global": {
     "batch_size": {
       "value": null,
-      "description": "Common batch sizes for training GANs.",
+      "description": "Controls the number of samples per gradient update.",
       "risk": "medium",
       "defined_in_paper": false
     },
     "epochs": {
       "value": null,
-      "description": "Number of epochs for training the model.",
+      "description": "Determines how many times the model will see the entire dataset during training.",
       "risk": "medium",
       "defined_in_paper": false
     },
     "learning_rate": {
       "value": null,
-      "description": "Learning rate for the Adam optimizer.",
+      "description": "Controls the step size during optimization.",
       "risk": "medium",
       "defined_in_paper": false
     },
     "seed": {
       "value": null,
-      "description": "Seed for random number generation to ensure reproducibility.",
+      "description": "Ensures reproducibility of results.",
       "risk": "low",
       "defined_in_paper": false
-    },
-    "latent_vector_size": {
-      "value": "100",
-      "description": "Size of the latent vector input to the generator.",
-      "risk": "medium",
-      "defined_in_paper": true
     }
   },
   "modules": {
     "main.py": {
       "config_path": {
         "value": null,
-        "description": "Path to the configuration file for model parameters.",
+        "description": "Specifies the configuration file to load settings from.",
         "risk": "low",
         "defined_in_paper": false
       },
       "seed": {
         "value": null,
-        "description": "Seed for random number generation to ensure reproducibility.",
+        "description": "Ensures reproducibility of results.",
         "risk": "low",
         "defined_in_paper": false
       }
     },
-    "data_loader.py": {
+    "data_loaders/__init__.py": {
       "batch_size": {
         "value": null,
-        "description": "Common batch sizes for training GANs.",
+        "description": "Controls the number of samples per gradient update.",
         "risk": "medium",
         "defined_in_paper": false
       }
     },
-    "training.py": {
+    "training/__init__.py": {
       "epochs": {
         "value": null,
-        "description": "Number of epochs for training the model.",
+        "description": "Determines how many times the model will see the entire dataset during training.",
         "risk": "medium",
         "defined_in_paper": false
       },
       "learning_rate": {
         "value": null,
-        "description": "Learning rate for the Adam optimizer.",
+        "description": "Controls the step size during optimization.",
         "risk": "medium",
         "defined_in_paper": false
       }

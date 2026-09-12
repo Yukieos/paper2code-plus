@@ -1,13 +1,12 @@
 {
   "repository_name": "TinyConvNet",
-  "summary": "A runnable code repository for the TinyConvNet model, a small convolutional classifier for grayscale digit recognition, with improved data preprocessing, error handling, logging, and configuration management.",
+  "summary": "A runnable code repository for the TinyConvNet model, a small convolutional classifier for grayscale digit recognition.",
   "global_dependencies": [
     "torch",
     "torchvision",
     "numpy",
     "matplotlib",
-    "logging",
-    "jsonschema"
+    "logging"
   ],
   "parameters": [
     {
@@ -15,73 +14,75 @@
       "context": null,
       "defined_in_paper": true,
       "value": "1e-3",
-      "suggested_values": "",
-      "reason": "Standard learning rate for Adam optimizer.",
+      "suggested_values": "[1e-4, 1e-3, 1e-2]",
+      "reason": "Common practice for tuning learning rates in training neural networks.",
       "default_value": "1e-3",
-      "risk_level": "low"
+      "risk_level": "medium"
     },
     {
       "name": "batch_size",
       "context": null,
       "defined_in_paper": true,
       "value": "64",
-      "suggested_values": "",
-      "reason": "Common batch size for training.",
+      "suggested_values": "[32, 64, 128]",
+      "reason": "Batch size affects training stability and speed.",
       "default_value": 64,
-      "risk_level": "low"
+      "risk_level": "medium"
     },
     {
       "name": "epochs",
       "context": null,
       "defined_in_paper": true,
       "value": "5",
-      "suggested_values": "",
-      "reason": "Number of epochs for training.",
+      "suggested_values": "[1, 5, 10]",
+      "reason": "Number of epochs is crucial for model convergence.",
       "default_value": 5,
-      "risk_level": "low"
+      "risk_level": "medium"
     },
     {
       "name": "seed",
       "context": null,
       "defined_in_paper": false,
       "value": null,
-      "suggested_values": "Any integer value",
-      "reason": "To ensure reproducibility of results.",
+      "suggested_values": "[42, 123, 2023]",
+      "reason": "Seed for reproducibility of results.",
       "default_value": 42,
-      "risk_level": "medium"
+      "risk_level": "low"
     },
     {
-      "name": "data_augmentation",
+      "name": "config_path",
       "context": null,
       "defined_in_paper": false,
-      "value": "false",
-      "suggested_values": "true, false",
-      "reason": "Whether to apply data augmentation techniques during training.",
-      "default_value": "false",
+      "value": "config.json",
+      "suggested_values": "\"config.json\"",
+      "reason": "Path to the configuration file.",
+      "default_value": "config.json",
       "risk_level": "low"
     }
   ],
   "files": [
     {
       "path": "main.py",
-      "purpose": "Entry point for the application, handles CLI arguments and orchestrates the training and evaluation process.",
+      "purpose": "Entry point for running the TinyConvNet training and evaluation pipeline.",
       "content_outline": [
         "Import necessary libraries",
         "Define main function",
         "Parse command line arguments",
-        "Load configuration from config.json",
-        "Set random seed for reproducibility",
-        "Load dataset",
+        "Load configuration",
+        "Set random seed",
+        "Prepare dataset",
         "Initialize model",
         "Train model",
         "Evaluate model",
-        "Report results"
+        "Report results",
+        "Handle errors and log events"
       ],
       "key_functions": [
         "main",
         "load_config",
         "set_seed",
-        "load_data",
+        "prepare_dataset",
+        "initialize_model",
         "train_model",
         "evaluate_model",
         "report_results",
@@ -90,23 +91,22 @@
       "function_skeletons": [
         {
           "name": "main",
-          "signature": "def main() -> None:",
-          "docstring": "Main entry point for the TinyConvNet application. Parses command line arguments and orchestrates the training and evaluation process.",
+          "signature": "def main(config_path: str, seed: int) -> None:",
+          "docstring": "Main entry point for the TinyConvNet training and evaluation.",
           "core_steps": [
-            "Parse command line arguments for config and seed",
-            "Load configuration from config.json",
-            "Set random seed for reproducibility",
-            "Load dataset using load_data()",
+            "Load configuration from config_path",
+            "Set random seed using seed",
+            "Prepare dataset",
             "Initialize model",
-            "Train model using train_model()",
-            "Evaluate model using evaluate_model()",
-            "Report results using report_results()"
+            "Train model",
+            "Evaluate model",
+            "Report results"
           ],
           "key_variables": [
             {
               "name": "config",
               "type": "dict",
-              "purpose": "Configuration settings loaded from config.json."
+              "purpose": "Configuration parameters for training and evaluation."
             },
             {
               "name": "seed",
@@ -122,48 +122,45 @@
         {
           "name": "setup_logging",
           "signature": "def setup_logging() -> None:",
-          "docstring": "Sets up logging for the application to track training progress and errors.",
+          "docstring": "Set up logging for the application.",
           "core_steps": [
             "Configure logging settings",
-            "Log the start of the training process"
+            "Log the start of the application"
           ],
           "key_variables": [],
           "dependencies": [],
-          "source_alignment": [
-            "Logging Setup"
-          ]
+          "source_alignment": []
+        },
+        {
+          "name": "handle_data_errors",
+          "signature": "def handle_data_errors(data: Any) -> None:",
+          "docstring": "Handle missing or corrupted data in the dataset.",
+          "core_steps": [
+            "Check for missing values",
+            "Log any issues found",
+            "Raise appropriate exceptions if necessary"
+          ],
+          "key_variables": [
+            {
+              "name": "data",
+              "type": "Any",
+              "purpose": "The dataset to check for errors."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": []
         }
       ],
       "dependencies": [],
       "requires_parameters": [
         {
-          "name": "learning_rate",
+          "name": "config_path",
           "context": null,
-          "defined_in_paper": true,
+          "defined_in_paper": false,
           "value": null,
-          "suggested_values": "",
-          "reason": "",
-          "default_value": null,
-          "risk_level": "low"
-        },
-        {
-          "name": "batch_size",
-          "context": null,
-          "defined_in_paper": true,
-          "value": null,
-          "suggested_values": "",
-          "reason": "",
-          "default_value": null,
-          "risk_level": "low"
-        },
-        {
-          "name": "epochs",
-          "context": null,
-          "defined_in_paper": true,
-          "value": null,
-          "suggested_values": "",
-          "reason": "",
-          "default_value": null,
+          "suggested_values": "\"config.json\"",
+          "reason": "Path to the configuration file.",
+          "default_value": "config.json",
           "risk_level": "low"
         },
         {
@@ -171,145 +168,97 @@
           "context": null,
           "defined_in_paper": false,
           "value": null,
-          "suggested_values": "",
-          "reason": "",
-          "default_value": null,
-          "risk_level": "low"
-        },
-        {
-          "name": "data_augmentation",
-          "context": null,
-          "defined_in_paper": false,
-          "value": null,
-          "suggested_values": "",
-          "reason": "",
-          "default_value": null,
+          "suggested_values": "[42, 123, 2023]",
+          "reason": "Seed for reproducibility of results.",
+          "default_value": 42,
           "risk_level": "low"
         }
       ],
       "acceptance_criteria": [
         "The script runs without errors when provided with valid arguments.",
-        "The model trains and evaluates correctly, producing expected outputs such as accuracy above 90% on the test set."
+        "The output includes training and evaluation results in a specified format (JSON).",
+        "Logs are generated for important events and errors."
       ]
     },
     {
       "path": "config.json",
-      "purpose": "Configuration file for model parameters and settings.",
+      "purpose": "Configuration file for TinyConvNet parameters.",
       "content_outline": [
         "Learning rate",
         "Batch size",
         "Number of epochs",
-        "Random seed",
-        "Data augmentation"
+        "Seed"
       ],
       "key_functions": [],
       "function_skeletons": [],
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The JSON file is correctly formatted and can be loaded without errors."
+        "The file is valid JSON.",
+        "Contains all necessary parameters for training."
       ]
     },
     {
-      "path": "data/loaders.py",
-      "purpose": "Data loading and preprocessing functions for the dataset.",
+      "path": "data_loader.py",
+      "purpose": "Data loading and preprocessing for the dataset.",
       "content_outline": [
-        "Define data loading functions",
-        "Define normalization functions",
-        "Define data augmentation functions"
+        "Import necessary libraries",
+        "Define Dataset class",
+        "Implement __init__ method",
+        "Implement __len__ method",
+        "Implement __getitem__ method",
+        "Handle missing or corrupted data"
       ],
       "key_functions": [
-        "load_data",
-        "normalize_data",
-        "augment_data"
+        "HandwrittenDigitDataset"
       ],
       "function_skeletons": [
         {
-          "name": "load_data",
-          "signature": "def load_data(batch_size: int, data_augmentation: bool) -> Tuple[DataLoader, DataLoader]:",
-          "docstring": "Loads the handwritten digit dataset and returns training and test DataLoaders, applying augmentation if specified.",
+          "name": "HandwrittenDigitDataset",
+          "signature": "class HandwrittenDigitDataset(Dataset):",
+          "docstring": "Dataset class for loading and preprocessing the handwritten digit dataset.",
           "core_steps": [
-            "Download the dataset if not already present",
-            "Apply normalization to the dataset",
-            "Apply data augmentation if specified",
-            "Create DataLoader for training and test sets"
+            "Load raw images and labels",
+            "Normalize images to [0, 1] range",
+            "Handle missing or corrupted data",
+            "Return images and labels in __getitem__"
           ],
           "key_variables": [
             {
-              "name": "batch_size",
-              "type": "int",
-              "purpose": "Number of samples per gradient update."
+              "name": "data_dir",
+              "type": "str",
+              "purpose": "Directory containing the dataset."
             },
             {
-              "name": "data_augmentation",
-              "type": "bool",
-              "purpose": "Flag to apply data augmentation."
+              "name": "transform",
+              "type": "callable",
+              "purpose": "Transform to apply to the images."
             }
           ],
           "dependencies": [
-            "torch",
-            "torchvision"
+            "torch.utils.data.Dataset"
           ],
-          "source_alignment": [
-            "3. Dataset"
-          ]
-        },
-        {
-          "name": "normalize_data",
-          "signature": "def normalize_data(images: Tensor) -> Tensor:",
-          "docstring": "Normalizes the input images to the range [0, 1].",
-          "core_steps": [
-            "Divide pixel values by 255 to normalize to [0, 1]"
-          ],
-          "key_variables": [
-            {
-              "name": "images",
-              "type": "Tensor",
-              "purpose": "Raw grayscale images to be normalized."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "3. Dataset"
-          ]
-        },
-        {
-          "name": "augment_data",
-          "signature": "def augment_data(images: Tensor) -> Tensor:",
-          "docstring": "Applies data augmentation techniques to the input images.",
-          "core_steps": [
-            "Randomly flip images horizontally",
-            "Randomly rotate images",
-            "Apply random cropping"
-          ],
-          "key_variables": [
-            {
-              "name": "images",
-              "type": "Tensor",
-              "purpose": "Raw grayscale images to be augmented."
-            }
-          ],
-          "dependencies": [],
           "source_alignment": [
             "3. Dataset"
           ]
         }
       ],
-      "dependencies": [
-        "torch",
-        "torchvision"
-      ],
+      "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "Data is loaded correctly and matches expected dimensions and types."
+        "The dataset can be loaded without errors.",
+        "Images are normalized correctly.",
+        "Missing or corrupted data is handled gracefully."
       ]
     },
     {
-      "path": "models/tiny_conv_net.py",
-      "purpose": "Definition of the TinyConvNet model architecture.",
+      "path": "model.py",
+      "purpose": "Definition of the TinyConvNet architecture.",
       "content_outline": [
-        "Define the TinyConvNet class",
-        "Implement forward pass"
+        "Import necessary libraries",
+        "Define TinyConvNet class",
+        "Implement __init__ method",
+        "Implement forward method"
       ],
       "key_functions": [
         "TinyConvNet"
@@ -318,31 +267,25 @@
         {
           "name": "TinyConvNet",
           "signature": "class TinyConvNet(nn.Module):",
-          "docstring": "Defines the TinyConvNet architecture for digit classification.",
+          "docstring": "TinyConvNet model for digit classification.",
           "core_steps": [
-            "Initialize convolutional layers",
-            "Initialize fully connected layers",
-            "Define the forward pass"
+            "Define convolutional layers",
+            "Define fully connected layers",
+            "Implement forward pass"
           ],
           "key_variables": [
             {
-              "name": "self.conv1",
-              "type": "nn.Conv2d",
-              "purpose": "First convolutional layer."
+              "name": "input_channels",
+              "type": "int",
+              "purpose": "Number of input channels (1 for grayscale)."
             },
             {
-              "name": "self.conv2",
-              "type": "nn.Conv2d",
-              "purpose": "Second convolutional layer."
-            },
-            {
-              "name": "self.fc",
-              "type": "nn.Linear",
-              "purpose": "Fully connected layer for output."
+              "name": "num_classes",
+              "type": "int",
+              "purpose": "Number of output classes (10 for digits)."
             }
           ],
           "dependencies": [
-            "torch",
             "torch.nn"
           ],
           "source_alignment": [
@@ -350,22 +293,22 @@
           ]
         }
       ],
-      "dependencies": [
-        "torch"
-      ],
+      "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "Model can be instantiated without errors.",
-        "Forward pass produces output of correct shape."
+        "The model can be instantiated without errors.",
+        "The forward pass produces output of correct shape."
       ]
     },
     {
-      "path": "training/train.py",
+      "path": "training.py",
       "purpose": "Training loop for the TinyConvNet model.",
       "content_outline": [
-        "Define training function",
+        "Import necessary libraries",
+        "Define train_model function",
         "Implement training loop",
-        "Log training metrics"
+        "Log training metrics",
+        "Handle errors during training"
       ],
       "key_functions": [
         "train_model"
@@ -373,23 +316,22 @@
       "function_skeletons": [
         {
           "name": "train_model",
-          "signature": "def train_model(model: nn.Module, train_loader: DataLoader, optimizer: Optimizer, criterion: nn.Module, epochs: int) -> None:",
-          "docstring": "Trains the TinyConvNet model using the provided data loader, optimizer, and loss function, logging metrics during training.",
+          "signature": "def train_model(model: nn.Module, train_loader: DataLoader, criterion: nn.Module, optimizer: Optimizer, epochs: int) -> None:",
+          "docstring": "Train the TinyConvNet model.",
           "core_steps": [
             "Set model to training mode",
             "Iterate over epochs",
-            "Iterate over batches in train_loader",
-            "Perform forward pass",
+            "Iterate over batches",
             "Compute loss",
-            "Perform backward pass",
-            "Update weights",
-            "Log training metrics"
+            "Backpropagate and update weights",
+            "Log metrics",
+            "Handle errors during training"
           ],
           "key_variables": [
             {
               "name": "model",
               "type": "nn.Module",
-              "purpose": "The TinyConvNet model to be trained."
+              "purpose": "The TinyConvNet model."
             },
             {
               "name": "train_loader",
@@ -397,14 +339,14 @@
               "purpose": "DataLoader for training data."
             },
             {
+              "name": "criterion",
+              "type": "nn.Module",
+              "purpose": "Loss function."
+            },
+            {
               "name": "optimizer",
               "type": "Optimizer",
               "purpose": "Optimizer for updating model weights."
-            },
-            {
-              "name": "criterion",
-              "type": "nn.Module",
-              "purpose": "Loss function for training."
             },
             {
               "name": "epochs",
@@ -413,60 +355,80 @@
             }
           ],
           "dependencies": [
-            "torch",
-            "torch.nn"
+            "torch.optim.Optimizer"
           ],
           "source_alignment": [
             "4. Training Procedure"
           ]
         }
       ],
-      "dependencies": [
-        "torch"
-      ],
+      "dependencies": [],
       "requires_parameters": [
         {
-          "name": "learning_rate",
+          "name": "model",
           "context": null,
-          "defined_in_paper": true,
+          "defined_in_paper": false,
           "value": null,
           "suggested_values": "",
-          "reason": "",
+          "reason": "Model to be trained.",
           "default_value": null,
-          "risk_level": "low"
+          "risk_level": "medium"
         },
         {
-          "name": "batch_size",
+          "name": "train_loader",
           "context": null,
-          "defined_in_paper": true,
+          "defined_in_paper": false,
           "value": null,
           "suggested_values": "",
-          "reason": "",
+          "reason": "DataLoader for training data.",
           "default_value": null,
-          "risk_level": "low"
+          "risk_level": "medium"
+        },
+        {
+          "name": "criterion",
+          "context": null,
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "Loss function to use during training.",
+          "default_value": null,
+          "risk_level": "medium"
+        },
+        {
+          "name": "optimizer",
+          "context": null,
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "Optimizer for updating model weights.",
+          "default_value": null,
+          "risk_level": "medium"
         },
         {
           "name": "epochs",
           "context": null,
-          "defined_in_paper": true,
+          "defined_in_paper": false,
           "value": null,
           "suggested_values": "",
-          "reason": "",
-          "default_value": null,
-          "risk_level": "low"
+          "reason": "Number of epochs to train.",
+          "default_value": 5,
+          "risk_level": "medium"
         }
       ],
       "acceptance_criteria": [
-        "Model trains without errors for the specified number of epochs.",
-        "Training logs show loss and accuracy metrics for each epoch."
+        "The model trains without errors.",
+        "Training metrics are logged correctly.",
+        "Training process handles errors gracefully."
       ]
     },
     {
-      "path": "evaluation/evaluate.py",
-      "purpose": "Evaluation functions for the TinyConvNet model.",
+      "path": "evaluation.py",
+      "purpose": "Evaluation of the trained TinyConvNet model.",
       "content_outline": [
-        "Define evaluation function",
-        "Compute accuracy and confusion matrix"
+        "Import necessary libraries",
+        "Define evaluate_model function",
+        "Compute accuracy and confusion matrix",
+        "Log evaluation metrics"
       ],
       "key_functions": [
         "evaluate_model"
@@ -475,73 +437,24 @@
         {
           "name": "evaluate_model",
           "signature": "def evaluate_model(model: nn.Module, test_loader: DataLoader) -> Tuple[float, np.ndarray]:",
-          "docstring": "Evaluates the TinyConvNet model on the test dataset and returns accuracy and confusion matrix.",
+          "docstring": "Evaluate the TinyConvNet model on the test dataset.",
           "core_steps": [
             "Set model to evaluation mode",
-            "Iterate over test_loader",
-            "Perform forward pass",
+            "Iterate over test data",
             "Compute accuracy",
-            "Calculate confusion matrix"
+            "Calculate confusion matrix",
+            "Log evaluation metrics"
           ],
           "key_variables": [
             {
               "name": "model",
               "type": "nn.Module",
-              "purpose": "The TinyConvNet model to be evaluated."
+              "purpose": "The TinyConvNet model."
             },
             {
               "name": "test_loader",
               "type": "DataLoader",
               "purpose": "DataLoader for test data."
-            }
-          ],
-          "dependencies": [
-            "torch",
-            "torch.nn",
-            "sklearn.metrics"
-          ],
-          "source_alignment": [
-            "5. Evaluation"
-          ]
-        }
-      ],
-      "dependencies": [
-        "torch",
-        "sklearn"
-      ],
-      "requires_parameters": [],
-      "acceptance_criteria": [
-        "Model evaluation produces accuracy and confusion matrix with accuracy above 90%."
-      ]
-    },
-    {
-      "path": "utils/report.py",
-      "purpose": "Utility functions for reporting results.",
-      "content_outline": [
-        "Define function to report results"
-      ],
-      "key_functions": [
-        "report_results"
-      ],
-      "function_skeletons": [
-        {
-          "name": "report_results",
-          "signature": "def report_results(accuracy: float, confusion_matrix: np.ndarray) -> None:",
-          "docstring": "Reports the evaluation results including accuracy and confusion matrix.",
-          "core_steps": [
-            "Print accuracy",
-            "Print confusion matrix"
-          ],
-          "key_variables": [
-            {
-              "name": "accuracy",
-              "type": "float",
-              "purpose": "The accuracy of the model on the test dataset."
-            },
-            {
-              "name": "confusion_matrix",
-              "type": "np.ndarray",
-              "purpose": "Confusion matrix of the model's predictions."
             }
           ],
           "dependencies": [],
@@ -551,47 +464,139 @@
         }
       ],
       "dependencies": [],
+      "requires_parameters": [
+        {
+          "name": "model",
+          "context": null,
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "Model to be evaluated.",
+          "default_value": null,
+          "risk_level": "medium"
+        },
+        {
+          "name": "test_loader",
+          "context": null,
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "DataLoader for test data.",
+          "default_value": null,
+          "risk_level": "medium"
+        }
+      ],
+      "acceptance_criteria": [
+        "The model evaluates without errors.",
+        "Accuracy and confusion matrix are computed correctly and logged."
+      ]
+    },
+    {
+      "path": "utils.py",
+      "purpose": "Utility functions for logging and metrics.",
+      "content_outline": [
+        "Import necessary libraries",
+        "Define logging functions",
+        "Define metric calculation functions",
+        "Visualize training metrics"
+      ],
+      "key_functions": [
+        "log_metrics",
+        "calculate_accuracy",
+        "visualize_metrics"
+      ],
+      "function_skeletons": [
+        {
+          "name": "log_metrics",
+          "signature": "def log_metrics(epoch: int, loss: float, accuracy: float) -> None:",
+          "docstring": "Log training metrics to console or file.",
+          "core_steps": [
+            "Format and print metrics"
+          ],
+          "key_variables": [
+            {
+              "name": "epoch",
+              "type": "int",
+              "purpose": "Current epoch number."
+            },
+            {
+              "name": "loss",
+              "type": "float",
+              "purpose": "Current loss value."
+            },
+            {
+              "name": "accuracy",
+              "type": "float",
+              "purpose": "Current accuracy value."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": []
+        },
+        {
+          "name": "visualize_metrics",
+          "signature": "def visualize_metrics(losses: List[float], accuracies: List[float]) -> None:",
+          "docstring": "Visualize training metrics over epochs.",
+          "core_steps": [
+            "Plot loss and accuracy curves",
+            "Display the plots"
+          ],
+          "key_variables": [
+            {
+              "name": "losses",
+              "type": "List[float]",
+              "purpose": "List of loss values over epochs."
+            },
+            {
+              "name": "accuracies",
+              "type": "List[float]",
+              "purpose": "List of accuracy values over epochs."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": []
+        }
+      ],
+      "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "Results are printed in a readable format."
+        "Logging functions work without errors.",
+        "Accuracy calculation is correct.",
+        "Training metrics are visualized correctly."
       ]
     }
   ],
   "tests": [
     {
-      "path": "tests/test_train.py",
-      "purpose": "Unit tests for the training module.",
-      "test_functions": [
-        "test_train_model"
-      ]
-    },
-    {
-      "path": "tests/test_evaluate.py",
-      "purpose": "Unit tests for the evaluation module.",
-      "test_functions": [
-        "test_evaluate_model"
-      ]
-    },
-    {
-      "path": "tests/test_loaders.py",
-      "purpose": "Unit tests for the data loading module.",
-      "test_functions": [
-        "test_load_data",
-        "test_augment_data"
-      ]
-    },
-    {
       "path": "tests/test_model.py",
-      "purpose": "Unit tests for the model definition.",
+      "purpose": "Unit tests for the TinyConvNet model.",
       "test_functions": [
-        "test_tiny_conv_net"
+        "test_model_initialization",
+        "test_forward_pass"
       ]
     },
     {
-      "path": "tests/test_report.py",
-      "purpose": "Unit tests for the reporting module.",
+      "path": "tests/test_training.py",
+      "purpose": "Unit tests for the training loop.",
       "test_functions": [
-        "test_report_results"
+        "test_training_loop",
+        "test_error_handling"
+      ]
+    },
+    {
+      "path": "tests/test_evaluation.py",
+      "purpose": "Unit tests for the evaluation functions.",
+      "test_functions": [
+        "test_evaluate_model",
+        "test_confusion_matrix_calculation"
+      ]
+    },
+    {
+      "path": "tests/test_utils.py",
+      "purpose": "Unit tests for utility functions.",
+      "test_functions": [
+        "test_logging_functions",
+        "test_visualization_functions"
       ]
     }
   ],

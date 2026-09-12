@@ -1,11 +1,12 @@
 {
   "repository_name": "MiniGAN",
-  "summary": "A runnable implementation of MiniGAN for synthesizing 28x28 grayscale digit images using a compact GAN architecture, with detailed alignment to the paper's methods and robust error handling.",
+  "summary": "A runnable implementation of MiniGAN for synthesizing 28x28 grayscale digit images using a compact GAN architecture, with detailed architectural specifications, data preprocessing, error handling, logging, and comprehensive testing.",
   "global_dependencies": [
     "torch",
     "torchvision",
     "numpy",
-    "matplotlib"
+    "matplotlib",
+    "logging"
   ],
   "parameters": [
     {
@@ -14,7 +15,7 @@
       "defined_in_paper": false,
       "value": "128",
       "suggested_values": "128, 256, 512",
-      "reason": "Common batch sizes for training GANs.",
+      "reason": "Controls the number of samples per gradient update.",
       "default_value": 128,
       "risk_level": "medium"
     },
@@ -24,7 +25,7 @@
       "defined_in_paper": false,
       "value": "20",
       "suggested_values": "10, 20, 50",
-      "reason": "Number of epochs for training the model.",
+      "reason": "Determines how many times the model will see the entire dataset during training.",
       "default_value": 20,
       "risk_level": "medium"
     },
@@ -34,7 +35,7 @@
       "defined_in_paper": false,
       "value": "0.0002",
       "suggested_values": "0.0001, 0.0002, 0.001",
-      "reason": "Learning rate for the Adam optimizer.",
+      "reason": "Controls the step size during optimization.",
       "default_value": 0.0002,
       "risk_level": "medium"
     },
@@ -44,19 +45,9 @@
       "defined_in_paper": false,
       "value": null,
       "suggested_values": "any integer",
-      "reason": "Seed for random number generation to ensure reproducibility.",
+      "reason": "Ensures reproducibility of results.",
       "default_value": 42,
       "risk_level": "low"
-    },
-    {
-      "name": "latent_vector_size",
-      "context": null,
-      "defined_in_paper": true,
-      "value": "100",
-      "suggested_values": "100, 200, 300",
-      "reason": "Size of the latent vector input to the generator.",
-      "default_value": 100,
-      "risk_level": "medium"
     }
   ],
   "files": [
@@ -67,13 +58,14 @@
         "Import necessary libraries",
         "Define main function",
         "Parse command line arguments",
-        "Load configuration from config.json",
+        "Load configuration",
         "Set random seed",
         "Initialize data loaders",
-        "Create model instances",
-        "Define loss function and optimizers",
-        "Run training loop",
-        "Evaluate model performance"
+        "Initialize models",
+        "Train the model",
+        "Evaluate the model",
+        "Handle errors gracefully",
+        "Log training progress"
       ],
       "key_functions": [
         "main"
@@ -82,60 +74,45 @@
         {
           "name": "main",
           "signature": "def main(config_path: str, seed: int) -> None:",
-          "docstring": "Main entry point for the MiniGAN training and evaluation process. \n\nArgs:\n    config_path (str): Path to the configuration file.\n    seed (int): Seed for random number generation for reproducibility.",
+          "docstring": "Main entry point for the MiniGAN training and evaluation process. Accepts a configuration file and a random seed for reproducibility.",
           "core_steps": [
             "Parse command line arguments for config and seed",
-            "Load configuration from JSON file",
             "Set random seed for reproducibility",
+            "Load configuration from JSON file",
             "Initialize data loaders for training and evaluation",
-            "Create instances of the generator and discriminator",
-            "Define loss function and optimizers",
-            "Run the training loop for the specified number of epochs",
-            "Evaluate the model and print results"
+            "Create generator and discriminator models",
+            "Train the models using the specified training procedure",
+            "Evaluate the models and report metrics",
+            "Log training progress and metrics"
           ],
           "key_variables": [
             {
               "name": "config",
               "type": "dict",
-              "purpose": "Configuration settings loaded from config.json."
+              "purpose": "Configuration settings loaded from the JSON file."
             },
             {
               "name": "seed",
               "type": "int",
-              "purpose": "Seed for random number generation."
+              "purpose": "Random seed for reproducibility."
             },
             {
-              "name": "train_loader",
-              "type": "DataLoader",
-              "purpose": "Data loader for training data."
-            },
-            {
-              "name": "eval_loader",
-              "type": "DataLoader",
-              "purpose": "Data loader for evaluation data."
-            },
-            {
-              "name": "generator",
-              "type": "nn.Module",
-              "purpose": "Generator model instance."
-            },
-            {
-              "name": "discriminator",
-              "type": "nn.Module",
-              "purpose": "Discriminator model instance."
-            },
-            {
-              "name": "optimizer_g",
-              "type": "Optimizer",
-              "purpose": "Optimizer for the generator."
-            },
-            {
-              "name": "optimizer_d",
-              "type": "Optimizer",
-              "purpose": "Optimizer for the discriminator."
+              "name": "logger",
+              "type": "logging.Logger",
+              "purpose": "Logger for tracking training progress."
             }
           ],
-          "dependencies": [],
+          "dependencies": [
+            "argparse",
+            "json",
+            "torch",
+            "torchvision",
+            "data_loaders",
+            "models",
+            "training",
+            "evaluation",
+            "logging"
+          ],
           "source_alignment": [
             "Abstract",
             "Section 4"
@@ -150,7 +127,7 @@
           "defined_in_paper": false,
           "value": null,
           "suggested_values": "path to config.json",
-          "reason": "Path to the configuration file for model parameters.",
+          "reason": "Specifies the configuration file to load settings from.",
           "default_value": "config.json",
           "risk_level": "low"
         },
@@ -160,74 +137,71 @@
           "defined_in_paper": false,
           "value": null,
           "suggested_values": "any integer",
-          "reason": "Seed for random number generation to ensure reproducibility.",
+          "reason": "Ensures reproducibility of results.",
           "default_value": 42,
           "risk_level": "low"
         }
       ],
       "acceptance_criteria": [
         "The script runs without errors when provided with valid arguments.",
-        "The model trains for the specified number of epochs and saves the trained weights.",
-        "Losses for both generator and discriminator are logged correctly and can be visualized."
+        "The output includes training and evaluation metrics.",
+        "Logging captures the training process and metrics at each epoch."
       ]
     },
     {
       "path": "config.json",
-      "purpose": "Configuration file for model parameters and training settings.",
+      "purpose": "Configuration file for MiniGAN settings.",
       "content_outline": [
         "Batch size",
         "Number of epochs",
         "Learning rate",
-        "Seed for random number generation",
-        "Latent vector size"
+        "Random seed"
       ],
       "key_functions": [],
       "function_skeletons": [],
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The JSON file is valid and can be loaded without errors.",
-        "Contains all necessary parameters for training."
+        "The JSON file is valid and can be loaded without errors."
       ]
     },
     {
-      "path": "data_loader.py",
-      "purpose": "Data loading and preprocessing for the training and evaluation datasets.",
+      "path": "data_loaders/__init__.py",
+      "purpose": "Data loading utilities for MiniGAN.",
       "content_outline": [
-        "Import necessary libraries",
-        "Define dataset class",
-        "Implement data loading functions",
-        "Apply data preprocessing and augmentation techniques"
+        "Define data loading functions",
+        "Implement dataset class",
+        "Preprocess data including normalization and augmentation"
       ],
       "key_functions": [
-        "load_data"
+        "get_data_loaders"
       ],
       "function_skeletons": [
         {
-          "name": "load_data",
-          "signature": "def load_data(batch_size: int) -> Tuple[DataLoader, DataLoader]:",
-          "docstring": "Load the training and evaluation datasets, apply preprocessing and augmentation, and return data loaders.\n\nArgs:\n    batch_size (int): The number of samples per gradient update.\n\nReturns:\n    Tuple[DataLoader, DataLoader]: Training and evaluation data loaders.",
+          "name": "get_data_loaders",
+          "signature": "def get_data_loaders(batch_size: int) -> Tuple[DataLoader, DataLoader]:",
+          "docstring": "Returns data loaders for training and evaluation datasets, including preprocessing steps.",
           "core_steps": [
-            "Load the handwritten digit dataset using torchvision",
-            "Apply necessary transformations (e.g., normalization, augmentation)",
-            "Create DataLoader instances for training and evaluation",
-            "Return the DataLoader instances"
+            "Load the handwritten digit dataset",
+            "Normalize and augment the dataset",
+            "Create training and evaluation data loaders with the specified batch size"
           ],
           "key_variables": [
             {
               "name": "train_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for training data."
+              "purpose": "Data loader for the training dataset."
             },
             {
               "name": "eval_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for evaluation data."
+              "purpose": "Data loader for the evaluation dataset."
             }
           ],
           "dependencies": [
             "torch",
-            "torchvision"
+            "torchvision.datasets",
+            "torch.utils.data"
           ],
           "source_alignment": [
             "Section 3"
@@ -242,23 +216,22 @@
           "defined_in_paper": false,
           "value": "128",
           "suggested_values": "128, 256, 512",
-          "reason": "Common batch sizes for training GANs.",
+          "reason": "Controls the number of samples per gradient update.",
           "default_value": 128,
           "risk_level": "medium"
         }
       ],
       "acceptance_criteria": [
         "Data loaders are created successfully without errors.",
-        "Data batches are of the correct size."
+        "Data loaders yield the correct number of samples per batch.",
+        "Data is normalized and augmented correctly."
       ]
     },
     {
-      "path": "models.py",
-      "purpose": "Define the generator and discriminator models for MiniGAN, including layer configurations and activation functions.",
+      "path": "models/__init__.py",
+      "purpose": "Model definitions for MiniGAN.",
       "content_outline": [
-        "Import necessary libraries",
-        "Define Generator class",
-        "Define Discriminator class"
+        "Define generator and discriminator classes with specified architectures"
       ],
       "key_functions": [
         "Generator",
@@ -268,9 +241,9 @@
         {
           "name": "Generator",
           "signature": "class Generator(nn.Module):",
-          "docstring": "Generator model for MiniGAN. \n\nMaps a latent vector to a 28x28 grayscale image.",
+          "docstring": "Generator model for MiniGAN that maps latent vectors to images, with specified layer configurations and activation functions.",
           "core_steps": [
-            "Initialize layers in the constructor with specified layer types and activation functions",
+            "Initialize layers in the constructor with specified configurations",
             "Define the forward pass method"
           ],
           "key_variables": [
@@ -285,9 +258,9 @@
               "purpose": "Second fully connected layer."
             },
             {
-              "name": "self.fc3",
-              "type": "nn.Linear",
-              "purpose": "Output layer."
+              "name": "self.activation",
+              "type": "callable",
+              "purpose": "Activation function for the layers."
             }
           ],
           "dependencies": [
@@ -301,9 +274,9 @@
         {
           "name": "Discriminator",
           "signature": "class Discriminator(nn.Module):",
-          "docstring": "Discriminator model for MiniGAN. \n\nMaps a 28x28 grayscale image to a real/fake probability.",
+          "docstring": "Discriminator model for MiniGAN that maps images to real/fake probabilities, with specified layer configurations and activation functions.",
           "core_steps": [
-            "Initialize layers in the constructor with specified layer types and activation functions",
+            "Initialize layers in the constructor with specified configurations",
             "Define the forward pass method"
           ],
           "key_variables": [
@@ -318,9 +291,9 @@
               "purpose": "Second fully connected layer."
             },
             {
-              "name": "self.fc3",
-              "type": "nn.Linear",
-              "purpose": "Output layer."
+              "name": "self.activation",
+              "type": "callable",
+              "purpose": "Activation function for the layers."
             }
           ],
           "dependencies": [
@@ -335,17 +308,16 @@
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "Generator and Discriminator classes can be instantiated without errors.",
-        "Forward pass produces outputs of the correct shape."
+        "Generator and discriminator classes can be instantiated without errors."
       ]
     },
     {
-      "path": "training.py",
-      "purpose": "Training loop for MiniGAN, including error handling and logging.",
+      "path": "training/__init__.py",
+      "purpose": "Training utilities for MiniGAN.",
       "content_outline": [
-        "Import necessary libraries",
-        "Define training function",
-        "Implement training loop"
+        "Define training loop",
+        "Implement loss calculation",
+        "Handle potential convergence issues"
       ],
       "key_functions": [
         "train"
@@ -354,40 +326,38 @@
         {
           "name": "train",
           "signature": "def train(generator: nn.Module, discriminator: nn.Module, train_loader: DataLoader, epochs: int, learning_rate: float) -> None:",
-          "docstring": "Train the MiniGAN model using the specified training data.\n\nArgs:\n    generator (nn.Module): The generator model.\n    discriminator (nn.Module): The discriminator model.\n    train_loader (DataLoader): Data loader for training data.\n    epochs (int): Number of training epochs.\n    learning_rate (float): Learning rate for the optimizer.",
+          "docstring": "Trains the MiniGAN model using the specified generator and discriminator, with error handling for convergence issues.",
           "core_steps": [
-            "Initialize optimizers for generator and discriminator",
-            "Loop over the number of epochs",
-            "For each batch in the training data:",
-            "Update discriminator",
-            "Update generator",
-            "Log losses and handle potential errors"
+            "Set the model to training mode",
+            "Iterate over epochs",
+            "Iterate over batches in the training loader",
+            "Compute loss for generator and discriminator",
+            "Update model weights",
+            "Log loss values and metrics"
           ],
           "key_variables": [
             {
               "name": "optimizer_g",
-              "type": "Optimizer",
+              "type": "torch.optim.Optimizer",
               "purpose": "Optimizer for the generator."
             },
             {
               "name": "optimizer_d",
-              "type": "Optimizer",
+              "type": "torch.optim.Optimizer",
               "purpose": "Optimizer for the discriminator."
             },
             {
-              "name": "loss_g",
-              "type": "float",
-              "purpose": "Loss for the generator."
-            },
-            {
-              "name": "loss_d",
-              "type": "float",
-              "purpose": "Loss for the discriminator."
+              "name": "loss_values",
+              "type": "List[float]",
+              "purpose": "List to store loss values for logging."
             }
           ],
           "dependencies": [
             "torch",
-            "torch.optim"
+            "torch.nn",
+            "torch.optim",
+            "data_loaders",
+            "logging"
           ],
           "source_alignment": [
             "Section 4"
@@ -402,7 +372,7 @@
           "defined_in_paper": false,
           "value": "20",
           "suggested_values": "10, 20, 50",
-          "reason": "Number of epochs for training the model.",
+          "reason": "Determines how many times the model will see the entire dataset during training.",
           "default_value": 20,
           "risk_level": "medium"
         },
@@ -412,23 +382,23 @@
           "defined_in_paper": false,
           "value": "0.0002",
           "suggested_values": "0.0001, 0.0002, 0.001",
-          "reason": "Learning rate for the Adam optimizer.",
+          "reason": "Controls the step size during optimization.",
           "default_value": 0.0002,
           "risk_level": "medium"
         }
       ],
       "acceptance_criteria": [
-        "Training loop runs without errors for the specified number of epochs.",
-        "Generator and discriminator losses are logged correctly and can be visualized."
+        "The training function runs without errors and updates model weights.",
+        "Loss values are logged correctly during training."
       ]
     },
     {
-      "path": "evaluation.py",
-      "purpose": "Evaluate the performance of MiniGAN, including error handling.",
+      "path": "evaluation/__init__.py",
+      "purpose": "Evaluation utilities for MiniGAN.",
       "content_outline": [
-        "Import necessary libraries",
-        "Define evaluation function",
-        "Implement evaluation metrics"
+        "Define evaluation metrics",
+        "Implement evaluation function",
+        "Handle potential issues during evaluation"
       ],
       "key_functions": [
         "evaluate"
@@ -437,32 +407,35 @@
         {
           "name": "evaluate",
           "signature": "def evaluate(generator: nn.Module, eval_loader: DataLoader) -> Tuple[List[float], float]:",
-          "docstring": "Evaluate the MiniGAN model and return loss curves and FID score.\n\nArgs:\n    generator (nn.Module): The generator model.\n    eval_loader (DataLoader): Data loader for evaluation data.\n\nReturns:\n    Tuple[List[float], float]: List of losses and FID score.",
+          "docstring": "Evaluates the MiniGAN model and returns loss curves and FID score, with error handling for evaluation issues.",
           "core_steps": [
-            "Generate images using the generator",
-            "Compute losses and FID score",
-            "Return the results"
+            "Set the model to evaluation mode",
+            "Iterate over batches in the evaluation loader",
+            "Compute loss and FID score",
+            "Log evaluation metrics"
           ],
           "key_variables": [
             {
-              "name": "generated_images",
-              "type": "Tensor",
-              "purpose": "Images generated by the generator."
-            },
-            {
               "name": "losses",
               "type": "List[float]",
-              "purpose": "List of losses during evaluation."
+              "purpose": "List to store losses for each batch."
             },
             {
               "name": "fid_score",
               "type": "float",
-              "purpose": "FID score for generated images."
+              "purpose": "FID score for the generated images."
+            },
+            {
+              "name": "logger",
+              "type": "logging.Logger",
+              "purpose": "Logger for tracking evaluation metrics."
             }
           ],
           "dependencies": [
             "torch",
-            "torchvision"
+            "torch.nn",
+            "metrics",
+            "logging"
           ],
           "source_alignment": [
             "Section 5"
@@ -472,81 +445,51 @@
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "Evaluation function runs without errors.",
-        "Returns valid loss curves and FID score."
-      ]
-    },
-    {
-      "path": "utils.py",
-      "purpose": "Utility functions for MiniGAN, including error handling.",
-      "content_outline": [
-        "Import necessary libraries",
-        "Define utility functions"
-      ],
-      "key_functions": [
-        "set_seed",
-        "save_model"
-      ],
-      "function_skeletons": [
-        {
-          "name": "set_seed",
-          "signature": "def set_seed(seed: int) -> None:",
-          "docstring": "Set the random seed for reproducibility.\n\nArgs:\n    seed (int): Seed for random number generation.",
-          "core_steps": [
-            "Set seed for numpy",
-            "Set seed for torch"
-          ],
-          "key_variables": [],
-          "dependencies": [
-            "torch",
-            "numpy"
-          ],
-          "source_alignment": []
-        },
-        {
-          "name": "save_model",
-          "signature": "def save_model(model: nn.Module, path: str) -> None:",
-          "docstring": "Save the model weights to a file.\n\nArgs:\n    model (nn.Module): The model to save.\n    path (str): Path to save the model weights.",
-          "core_steps": [
-            "Use torch.save to save the model state_dict"
-          ],
-          "key_variables": [],
-          "dependencies": [
-            "torch"
-          ],
-          "source_alignment": []
-        }
-      ],
-      "dependencies": [],
-      "requires_parameters": [],
-      "acceptance_criteria": [
-        "Utility functions can be called without errors."
+        "The evaluation function runs without errors and returns valid metrics.",
+        "Evaluation metrics are logged correctly."
       ]
     }
   ],
   "tests": [
     {
-      "path": "tests/test_training.py",
-      "purpose": "Unit tests for the training module, including loss logging verification.",
+      "path": "tests/test_main.py",
+      "purpose": "Unit tests for main.py functionality.",
       "test_functions": [
-        "test_training_loop",
-        "test_loss_logging"
+        "test_main_function",
+        "test_logging_functionality"
+      ]
+    },
+    {
+      "path": "tests/test_data_loaders.py",
+      "purpose": "Unit tests for data loaders.",
+      "test_functions": [
+        "test_get_data_loaders",
+        "test_data_preprocessing"
+      ]
+    },
+    {
+      "path": "tests/test_models.py",
+      "purpose": "Unit tests for model definitions.",
+      "test_functions": [
+        "test_generator",
+        "test_discriminator",
+        "test_model_architecture"
+      ]
+    },
+    {
+      "path": "tests/test_training.py",
+      "purpose": "Unit tests for training utilities.",
+      "test_functions": [
+        "test_train_function",
+        "test_convergence_handling"
       ]
     },
     {
       "path": "tests/test_evaluation.py",
-      "purpose": "Unit tests for the evaluation module, including FID score verification.",
+      "purpose": "Unit tests for evaluation utilities.",
       "test_functions": [
-        "test_evaluate",
-        "test_fid_score"
-      ]
-    },
-    {
-      "path": "tests/test_data_loader.py",
-      "purpose": "Unit tests for the data loading module, including error handling tests.",
-      "test_functions": [
-        "test_load_data",
-        "test_data_loading_errors"
+        "test_evaluate_function",
+        "test_evaluation_metrics"
       ]
     }
   ],

@@ -3,6 +3,7 @@ from __future__ import annotations
 import argparse
 import json
 import logging
+import re
 import subprocess
 import sys
 import tempfile
@@ -1144,6 +1145,53 @@ class CodeWriterAgent:
         return state
 
 
+_MAIN_BLOCK_RE = re.compile(r'^(?P<indent>[ \t]*)if\s+__name__\s*==\s*[\'"]__main__[\'"]\s*:\s*$')
+
+
+def _fix_empty_main_block(path: Path) -> bool:
+    """Insert `pass` into an `if __name__ == "__main__":` block whose body is
+    only comments/blank lines.
+
+    The code-writing agents occasionally fill that block entirely with
+    commented-out "example usage" and no real statement — valid-looking but
+    actually a SyntaxError (an indented block needs at least one statement).
+    Fixed deterministically here rather than relying on the LLM to always
+    follow a "don't do this" prompt instruction. Returns True if applied.
+    """
+    text = path.read_text(encoding="utf-8")
+    lines = text.splitlines()
+
+    for i, line in enumerate(lines):
+        match = _MAIN_BLOCK_RE.match(line)
+        if not match:
+            continue
+
+        base_indent = match.group("indent")
+        body_indent = None
+        has_real_statement = False
+        j = i + 1
+        while j < len(lines):
+            stripped = lines[j].strip()
+            if not stripped:
+                j += 1
+                continue
+            line_indent = lines[j][: len(lines[j]) - len(lines[j].lstrip())]
+            if len(line_indent) <= len(base_indent):
+                break
+            if body_indent is None:
+                body_indent = line_indent
+            if not stripped.startswith("#"):
+                has_real_statement = True
+            j += 1
+
+        if not has_real_statement:
+            lines.insert(i + 1, f"{body_indent or base_indent + '    '}pass")
+            path.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            return True
+
+    return False
+
+
 class SyntaxCheckerAgent:
     """Lightweight syntax checking - only basic Python syntax validation."""
 
@@ -1160,6 +1208,9 @@ class SyntaxCheckerAgent:
             path = Path(file_path)
             if not path.exists() or path.suffix != ".py":
                 continue
+
+            if _fix_empty_main_block(path):
+                logger.info(f"SyntaxCheckerAgent auto-fixed an empty __main__ block in {path.name}")
 
             error = self._check_syntax(path)
             if error:
@@ -1802,7 +1853,19 @@ class CodeReviewDebugAgent:
             if not path.exists() or path.suffix != ".py":
                 continue
 
+            # generated_files holds absolute paths (output_dir / plan_path), but the
+            # plan keys files by their relative path (e.g. "evaluation/evaluate.py").
+            # Bare-filename/exact-string lookups only ever matched root-level files
+            # (main.py, config.json) by accident — every nested file (data/, models/,
+            # training/, evaluation/) silently skipped review. Match by relative-path
+            # suffix instead.
+            normalized_path = str(path).replace("\\", "/")
             file_spec = file_spec_map.get(path.name) or file_spec_map.get(str(path))
+            if not file_spec:
+                for spec_path, spec in file_spec_map.items():
+                    if spec_path and normalized_path.endswith(spec_path.replace("\\", "/")):
+                        file_spec = spec
+                        break
             if not file_spec:
                 logger.warning(f"No spec found for {path.name}, skipping review")
                 continue

@@ -4,7 +4,7 @@
       "step_id": "s1",
       "description": "Setup logging for the training process.",
       "sequence_index": 0,
-      "source_reference": "Logging Setup",
+      "source_reference": "Abstract",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
@@ -15,95 +15,91 @@
     },
     {
       "step_id": "s2",
-      "description": "Load configuration settings from config.json.",
+      "description": "Load and prepare the handwritten digit dataset for training.",
       "sequence_index": 1,
-      "source_reference": "Abstract",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s3",
-      "description": "Set random seed for reproducibility.",
-      "sequence_index": 2,
-      "source_reference": "Abstract",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s4",
-      "description": "Load and normalize the training dataset of handwritten digits.",
-      "sequence_index": 3,
       "source_reference": "3. Dataset",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
       "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
+      "consumes_variables": [
+        "Normalized training images",
+        "Labels"
+      ],
+      "produces_variables": [
+        "Prepared dataset"
+      ],
       "trigger_conditions": []
     },
     {
-      "step_id": "s5",
+      "step_id": "s3",
       "description": "Initialize the TinyConvNet model architecture.",
-      "sequence_index": 4,
+      "sequence_index": 2,
       "source_reference": "2. Model Architecture",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
       "prerequisites": [],
       "consumes_variables": [],
-      "produces_variables": [],
+      "produces_variables": [
+        "TinyConvNet model"
+      ],
+      "trigger_conditions": []
+    },
+    {
+      "step_id": "s4",
+      "description": "Train the TinyConvNet model using the prepared dataset and cross-entropy loss.",
+      "sequence_index": 3,
+      "source_reference": "4. Training Procedure",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [
+        "Prepared dataset",
+        "Labels"
+      ],
+      "produces_variables": [
+        "Trained model"
+      ],
+      "trigger_conditions": [
+        "epochs=5",
+        "batch_size=64"
+      ]
+    },
+    {
+      "step_id": "s5",
+      "description": "Evaluate the trained model on the test dataset.",
+      "sequence_index": 4,
+      "source_reference": "5. Evaluation",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [
+        "Trained model",
+        "Test dataset"
+      ],
+      "produces_variables": [
+        "Evaluation metrics"
+      ],
       "trigger_conditions": []
     },
     {
       "step_id": "s6",
-      "description": "Train the TinyConvNet model using the training dataset with cross-entropy loss and Adam optimizer.",
+      "description": "Log and report the evaluation results.",
       "sequence_index": 5,
-      "source_reference": "4. Training Procedure",
+      "source_reference": "5. Evaluation",
       "figure_ids": [],
       "algorithm_ids": [],
-      "equation_ids": [
-        "e1"
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [
+        "Evaluation metrics"
       ],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s7",
-      "description": "Evaluate the trained model on the test dataset and compute performance metrics.",
-      "sequence_index": 6,
-      "source_reference": "5. Evaluation",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s8",
-      "description": "Report the evaluation results including accuracy and confusion matrix.",
-      "sequence_index": 7,
-      "source_reference": "5. Evaluation",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
+      "produces_variables": [
+        "Logged results"
+      ],
       "trigger_conditions": []
     }
   ],
@@ -137,37 +133,28 @@
       "to_step": "s6",
       "condition": null,
       "rationale": null
-    },
-    {
-      "from_step": "s6",
-      "to_step": "s7",
-      "condition": null,
-      "rationale": null
-    },
-    {
-      "from_step": "s7",
-      "to_step": "s8",
-      "condition": null,
-      "rationale": null
     }
   ],
   "variable_dependencies": [
     {
-      "variable": "Normalized training images",
-      "depends_on": [],
+      "variable": "Prepared dataset",
+      "depends_on": [
+        "Normalized training images",
+        "Labels"
+      ],
       "source_reference": "3. Dataset",
       "rationale": null
     },
     {
-      "variable": "Labels",
+      "variable": "TinyConvNet model",
       "depends_on": [],
-      "source_reference": "3. Dataset",
+      "source_reference": "2. Model Architecture",
       "rationale": null
     },
     {
       "variable": "Trained model",
       "depends_on": [
-        "Normalized training images",
+        "Prepared dataset",
         "Labels"
       ],
       "source_reference": "4. Training Procedure",
@@ -176,7 +163,16 @@
     {
       "variable": "Evaluation metrics",
       "depends_on": [
-        "Trained model"
+        "Trained model",
+        "Test dataset"
+      ],
+      "source_reference": "5. Evaluation",
+      "rationale": null
+    },
+    {
+      "variable": "Logged results",
+      "depends_on": [
+        "Evaluation metrics"
       ],
       "source_reference": "5. Evaluation",
       "rationale": null

@@ -3,14 +3,54 @@
   "passed": false,
   "findings": [
     {
-      "category": "syntax_error",
-      "file": "evaluation.py",
-      "detail": "expected an indented block after 'if' statement on line 87 (line 98)"
+      "category": "lint_violation",
+      "file": "data_loaders/__init__.py",
+      "detail": "line 9:F401 'torchvision.io.read_image' imported but unused"
     },
     {
-      "category": "empty_main_block",
-      "file": "models.py",
-      "detail": "`if __name__ == \"__main__\":` block has no executable statement (only comments) \u2014 a real run would raise IndentationError."
+      "category": "lint_violation",
+      "file": "main.py",
+      "detail": "line 4:F401 'os' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "main.py",
+      "detail": "line 6:F401 'torchvision' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "main.py",
+      "detail": "line 11:F401 'pandas as pd' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "main.py",
+      "detail": "line 74:F821 undefined name 'logger'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "models/__init__.py",
+      "detail": "line 72:F821 undefined name 'latent_dim'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "training/__init__.py",
+      "detail": "line 53:F821 undefined name 'device'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "training/__init__.py",
+      "detail": "line 57:F821 undefined name 'device'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "training/__init__.py",
+      "detail": "line 58:F821 undefined name 'device'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "training/__init__.py",
+      "detail": "line 68:F821 undefined name 'device'"
     }
   ]
 }

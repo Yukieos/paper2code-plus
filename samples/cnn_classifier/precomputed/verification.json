@@ -1,21 +1,56 @@
 {
-  "files_checked": 5,
+  "files_checked": 6,
   "passed": false,
   "findings": [
     {
-      "category": "syntax_error",
-      "file": "evaluation/evaluate.py",
-      "detail": "expected an indented block after 'if' statement on line 83 (line 92)"
+      "category": "lint_violation",
+      "file": "data_loader.py",
+      "detail": "line 8:F401 'typing.Any' imported but unused"
     },
     {
-      "category": "empty_main_block",
+      "category": "lint_violation",
+      "file": "evaluation.py",
+      "detail": "line 9:F401 'os' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "evaluation.py",
+      "detail": "line 10:F401 'typing.Dict' imported but unused"
+    },
+    {
+      "category": "lint_violation",
       "file": "main.py",
-      "detail": "`if __name__ == \"__main__\":` block has no executable statement (only comments) \u2014 a real run would raise IndentationError."
+      "detail": "line 7:F401 'pandas as pd' imported but unused"
     },
     {
-      "category": "empty_main_block",
-      "file": "models/tiny_conv_net.py",
-      "detail": "`if __name__ == \"__main__\":` block has no executable statement (only comments) \u2014 a real run would raise IndentationError."
+      "category": "lint_violation",
+      "file": "main.py",
+      "detail": "line 12:F401 'training.train_model' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "main.py",
+      "detail": "line 43:F821 undefined name 'Any'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 101:F821 undefined name 'torch'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 125:F821 undefined name 'torch'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 129:F821 undefined name 'criterion'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 132:F821 undefined name 'torch'"
     }
   ]
 }

@@ -1,19 +1,20 @@
-import argparse
 import json
 import logging
 import os
-import random
-import pandas as pd
+import sys
+import argparse
 import numpy as np
+import pandas as pd
 import torch
-from torch import nn, optim
 from torch.utils.data import DataLoader
 from torchvision import datasets, transforms
-import matplotlib.pyplot as plt
+from model import TinyConvNet  # Assuming model.py contains the TinyConvNet definition
+from training import train_model  # Assuming training.py contains the training logic
+from evaluation import evaluate_model  # Assuming evaluation.py contains the evaluation logic
 
 def setup_logging() -> None:
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info("Logging is set up.")
+    logging.info("Starting the evaluation pipeline.")
 
 def load_config(config_path: str) -> dict:
     with open(config_path, 'r') as f:
@@ -21,105 +22,59 @@ def load_config(config_path: str) -> dict:
     return config
 
 def set_seed(seed: int) -> None:
-    random.seed(seed)
-    np.random.seed(seed)
     torch.manual_seed(seed)
+    np.random.seed(seed)
 
-def load_data(batch_size: int) -> (DataLoader, DataLoader):
+def prepare_dataset(data_path: str, batch_size: int) -> DataLoader:
     transform = transforms.Compose([transforms.ToTensor()])
-    train_dataset = datasets.MNIST(root='./data', train=True, download=True, transform=transform)
-    test_dataset = datasets.MNIST(root='./data', train=False, download=True, transform=transform)
-    
-    train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
-    test_loader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False)
-    
-    return train_loader, test_loader
+    dataset = datasets.MNIST(root=data_path, train=False, transform=transform, download=True)
+    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
+    return data_loader
 
-class TinyConvNet(nn.Module):
-    def __init__(self):
-        super(TinyConvNet, self).__init__()
-        self.conv1 = nn.Conv2d(1, 16, kernel_size=3, padding=1)
-        self.conv2 = nn.Conv2d(16, 32, kernel_size=3, padding=1)
-        self.fc = nn.Linear(32 * 7 * 7, 10)
-        self.pool = nn.MaxPool2d(2, 2)
-
-    def forward(self, x):
-        x = self.pool(nn.functional.relu(self.conv1(x)))
-        x = self.pool(nn.functional.relu(self.conv2(x)))
-        x = x.view(-1, 32 * 7 * 7)
-        x = self.fc(x)
-        return x
-
-def train_model(model: nn.Module, train_loader: DataLoader, learning_rate: float, epochs: int) -> None:
-    criterion = nn.CrossEntropyLoss()
-    optimizer = optim.Adam(model.parameters(), lr=learning_rate)
-
-    for epoch in range(epochs):
-        model.train()
-        running_loss = 0.0
-        for images, labels in train_loader:
-            optimizer.zero_grad()
-            outputs = model(images)
-            loss = criterion(outputs, labels)
-            loss.backward()
-            optimizer.step()
-            running_loss += loss.item()
-        
-        logging.info(f'Epoch [{epoch + 1}/{epochs}], Loss: {running_loss / len(train_loader):.4f}')
-
-def evaluate_model(model: nn.Module, test_loader: DataLoader) -> dict:
-    model.eval()
-    correct = 0
-    total = 0
-
-    with torch.no_grad():
-        for images, labels in test_loader:
-            outputs = model(images)
-            _, predicted = torch.max(outputs.data, 1)
-            total += labels.size(0)
-            correct += (predicted == labels).sum().item()
-
-    accuracy = 100 * correct / total
-    logging.info(f'Accuracy of the model on the test images: {accuracy:.2f}%')
-    return {'accuracy': accuracy}
+def initialize_model() -> TinyConvNet:
+    model = TinyConvNet()
+    return model
 
 def report_results(results: dict, output_path: str) -> None:
-    df = pd.DataFrame([results])
-    df.to_csv(output_path, index=False)
-    logging.info(f'Results saved to {output_path}')
+    with open(output_path, 'w') as f:
+        json.dump(results, f, indent=4)
+    logging.info(f"Results saved to {output_path}")
 
-def visualize_results(results: dict) -> None:
-    plt.figure(figsize=(10, 5))
-    plt.bar(['Accuracy'], [results['accuracy']], color='blue')
-    plt.ylim(0, 100)
-    plt.ylabel('Accuracy (%)')
-    plt.title('Model Evaluation Results')
-    plt.savefig('evaluation_results.png')
-    plt.show()
+def handle_data_errors(data: Any) -> None:
+    if data.isnull().values.any():
+        logging.error("Data contains missing values.")
+        raise ValueError("Data contains missing values.")
+    logging.info("Data integrity check passed.")
 
-def main() -> None:
-    parser = argparse.ArgumentParser(description='TinyConvNet Evaluation')
-    parser.add_argument('--config', type=str, default='config.json', help='Path to configuration file')
-    parser.add_argument('--seed', type=int, default=None, help='Random seed for reproducibility')
-    args = parser.parse_args()
-
+def main(config_path: str = "config.json", seed: int = 42) -> None:
     setup_logging()
-    config = load_config(args.config)
-
-    if args.seed is not None:
-        set_seed(args.seed)
-
-    learning_rate = config['global']['learning_rate']['value']
-    batch_size = config['global']['batch_size']['value']
-    epochs = config['global']['epochs']['value']
-
-    train_loader, test_loader = load_data(batch_size)
-    model = TinyConvNet()
     
-    train_model(model, train_loader, learning_rate, epochs)
-    results = evaluate_model(model, test_loader)
-    report_results(results, 'evaluation_results.csv')
-    visualize_results(results)
+    try:
+        config = load_config(config_path)
+        set_seed(seed)
 
-if __name__ == '__main__':
-    main()
+        data_loader = prepare_dataset(config['data_path'], config['global']['batch_size']['value'])
+        model = initialize_model()
+
+        checkpoint_path = config['checkpoint_path']
+        if os.path.exists(checkpoint_path):
+            model.load_state_dict(torch.load(checkpoint_path))
+            logging.info(f"Model loaded from {checkpoint_path}")
+        else:
+            logging.error(f"Checkpoint not found at {checkpoint_path}")
+            sys.exit(1)
+
+        results = evaluate_model(model, data_loader)
+        report_results(results, config['output_path'])
+
+    except Exception as e:
+        logging.error(f"An error occurred: {e}")
+        sys.exit(1)
+
+if __name__ == "__main__":
+    parser = argparse.ArgumentParser(description="TinyConvNet Evaluation Pipeline")
+    parser.add_argument('--config_path', type=str, default="config.json", help="Path to the configuration file.")
+    parser.add_argument('--seed', type=int, default=42, help="Random seed for reproducibility.")
+    args = parser.parse_args()
+    
+    main(args.config_path, args.seed)
