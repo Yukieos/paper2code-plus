@@ -16,9 +16,19 @@ from pathlib import Path
 
 import streamlit as st
 
+from dag import flow_reasoning_to_mermaid
+from verify import verify
+
 REPO_ROOT = Path(__file__).resolve().parent
 RUNS_DIR = REPO_ROOT / "runs"
 RUNS_DIR.mkdir(exist_ok=True)
+
+SAMPLES_DIR = REPO_ROOT / "samples"
+SAMPLES = {
+    "cnn_classifier": "TinyConvNet — small CNN digit classifier",
+    "transformer_encoder": "MiniEncoder — small Transformer sentiment classifier",
+    "simple_gan": "MiniGAN — small fully-connected GAN",
+}
 
 STAGE1_MARKERS = [
     "Running pipeline",
@@ -70,6 +80,48 @@ def zip_dir(src: Path) -> bytes:
     return buf.getvalue()
 
 
+def render_mermaid(mermaid_src: str, height: int = 420) -> None:
+    import streamlit.components.v1 as components
+
+    components.html(
+        f"""
+        <div class="mermaid">{mermaid_src}</div>
+        <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+        <script>mermaid.initialize({{ startOnLoad: true, theme: "neutral" }});</script>
+        """,
+        height=height,
+        scrolling=True,
+    )
+
+
+def show_generated_files(repo_dir: Path, key_prefix: str) -> None:
+    files = sorted(p for p in repo_dir.rglob("*") if p.is_file())
+    if not files:
+        st.info("No files were generated.")
+        return
+    choice = st.selectbox("File", [str(p.relative_to(repo_dir)) for p in files], key=f"file-{key_prefix}")
+    chosen = repo_dir / choice
+    language = "python" if chosen.suffix == ".py" else ("json" if chosen.suffix == ".json" else "yaml")
+    st.code(chosen.read_text(encoding="utf-8"), language=language)
+    st.download_button("Download this file", chosen.read_bytes(), file_name=chosen.name, key=f"dl-{key_prefix}-{chosen}")
+
+
+def show_verification(report: dict) -> None:
+    if report["passed"]:
+        st.success(f"Verified {report['files_checked']} generated file(s) — no issues found.")
+        return
+    st.warning(f"Verified {report['files_checked']} generated file(s) — {len(report['findings'])} issue(s) found.")
+    for finding in report["findings"]:
+        st.markdown(f"- **{finding['category']}** in `{finding['file']}`: {finding['detail']}")
+
+
+def show_plan_summary(plan: dict) -> None:
+    st.markdown(f"**{plan.get('repository_name', 'Repository')}** — {plan.get('summary', '')}")
+    st.markdown("**Files planned:**")
+    for f in plan.get("files", []):
+        st.markdown(f"- `{f['path']}` — {f.get('purpose', '')}")
+
+
 def stream_subprocess(cmd, cwd, env, log_placeholder, progress_placeholder, markers) -> tuple[int, str]:
     process = subprocess.Popen(
         cmd, cwd=cwd, env=env, stdout=subprocess.PIPE, stderr=subprocess.STDOUT,
@@ -89,7 +141,7 @@ def stream_subprocess(cmd, cwd, env, log_placeholder, progress_placeholder, mark
     return process.returncode, "\n".join(lines)
 
 
-st.set_page_config(page_title="Paper2Code", page_icon="🧪", layout="wide")
+st.set_page_config(page_title="Paper2Code", layout="wide")
 
 # When this app is deployed somewhere public (e.g. Streamlit Community Cloud),
 # a host-configured OPENAI_API_KEY must NOT be silently handed to every visitor
@@ -97,7 +149,7 @@ st.set_page_config(page_title="Paper2Code", page_icon="🧪", layout="wide")
 # the host explicitly opts in (for their own private/local use).
 ALLOW_SHARED_KEY = os.environ.get("PAPER2CODE_ALLOW_SHARED_KEY", "").lower() in ("1", "true", "yes")
 
-st.sidebar.title("⚙️ Settings")
+st.sidebar.title("Settings")
 api_key = st.sidebar.text_input(
     "OpenAI API key",
     type="password",
@@ -113,13 +165,35 @@ skip_annotation = st.sidebar.checkbox(
     help="Image captioning needs a separate ARK_API_KEY; leave this on unless you have one set.",
 )
 
-st.title("🧪 Paper2Code")
+st.title("Paper2Code")
 st.caption(
     "Multi-agent pipeline that turns an ML paper into a structured spec (UPS-IR) "
     "and then into a runnable PyTorch training repo."
 )
 
-tab_run, tab_history = st.tabs(["Run a paper", "Past runs"])
+tab_gallery, tab_run, tab_history = st.tabs(["Sample gallery (instant)", "Run a paper", "Past runs"])
+
+with tab_gallery:
+    gallery_key = st.selectbox("Pick a sample paper", list(SAMPLES.keys()), format_func=lambda k: SAMPLES[k])
+    gallery_sample_dir = SAMPLES_DIR / gallery_key
+    gallery_precomputed = gallery_sample_dir / "precomputed"
+
+    with st.expander("Paper text"):
+        st.markdown((gallery_sample_dir / "paper.md").read_text(encoding="utf-8"))
+
+    st.subheader("1. Implementation plan")
+    show_plan_summary(json.loads((gallery_precomputed / "code_plan.json").read_text(encoding="utf-8")))
+
+    st.subheader("2. Task DAG (execution order)")
+    render_mermaid((gallery_precomputed / "dag.mmd").read_text(encoding="utf-8"))
+
+    st.subheader("3. Generated PyTorch files")
+    show_generated_files(gallery_precomputed / "generated_repo", key_prefix=gallery_key)
+    st.download_button("Download full generated_repo.zip", zip_dir(gallery_precomputed / "generated_repo"),
+                        file_name=f"{gallery_key}_generated_repo.zip", key=f"zip-{gallery_key}")
+
+    st.subheader("4. Verification results")
+    show_verification(json.loads((gallery_precomputed / "verification.json").read_text(encoding="utf-8")))
 
 with tab_run:
     input_mode = st.radio(
@@ -145,7 +219,7 @@ with tab_run:
 
     run_codegen = st.checkbox("Also generate code (Stage 2: UPS-IR → PyTorch repo)", value=True)
 
-    run_clicked = st.button("🚀 Run pipeline", type="primary", disabled=not md_text)
+    run_clicked = st.button("Run pipeline", type="primary", disabled=not md_text)
 
     if run_clicked:
         if not api_key:
@@ -190,18 +264,25 @@ with tab_run:
                 st.error("Stage 2 failed — see log above.")
             else:
                 st.success("Stage 2 complete.")
+
+                flow_path = job_dir / "output" / "flow_reasoning.json"
+                if flow_path.exists():
+                    st.subheader("Task DAG")
+                    render_mermaid(flow_reasoning_to_mermaid(json.loads(flow_path.read_text(encoding="utf-8"))))
+
                 repo_dir = job_dir / "generated_repo"
                 if repo_dir.exists() and any(repo_dir.iterdir()):
+                    st.subheader("Generated files")
+                    show_generated_files(repo_dir, key_prefix=job_dir.name)
                     st.download_button(
-                        "⬇️ Download generated_repo.zip",
+                        "Download generated_repo.zip",
                         data=zip_dir(repo_dir),
                         file_name=f"{job_dir.name}_generated_repo.zip",
                         mime="application/zip",
                     )
-                    with st.expander("Generated files"):
-                        for p in sorted(repo_dir.rglob("*")):
-                            if p.is_file():
-                                st.text(str(p.relative_to(repo_dir)))
+
+                    st.subheader("Verification results")
+                    show_verification(verify(repo_dir).to_dict())
 
 with tab_history:
     jobs = sorted((p for p in RUNS_DIR.iterdir() if p.is_dir()), reverse=True)

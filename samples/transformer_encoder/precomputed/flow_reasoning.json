@@ -1,0 +1,107 @@
+{
+  "execution_order": [
+    {
+      "step_id": "ms1",
+      "description": "Define the model architecture using MiniEncoder.",
+      "sequence_index": 0,
+      "source_reference": "Section 2",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [],
+      "produces_variables": [],
+      "trigger_conditions": []
+    },
+    {
+      "step_id": "ms2",
+      "description": "Prepare the dataset for training, including tokenization and mapping.",
+      "sequence_index": 1,
+      "source_reference": "Section 3",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [],
+      "produces_variables": [],
+      "trigger_conditions": []
+    },
+    {
+      "step_id": "ms3",
+      "description": "Train the MiniEncoder model using the prepared dataset and specified training parameters.",
+      "sequence_index": 2,
+      "source_reference": "Section 4",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [],
+      "produces_variables": [],
+      "trigger_conditions": []
+    },
+    {
+      "step_id": "ms4",
+      "description": "Evaluate the trained model on the test dataset and report metrics.",
+      "sequence_index": 3,
+      "source_reference": "Section 5",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [],
+      "produces_variables": [],
+      "trigger_conditions": []
+    }
+  ],
+  "transitions": [
+    {
+      "from_step": "ms1",
+      "to_step": "ms2",
+      "condition": null,
+      "rationale": "Model architecture must be defined before preparing the dataset."
+    },
+    {
+      "from_step": "ms2",
+      "to_step": "ms3",
+      "condition": null,
+      "rationale": "Dataset must be prepared before training the model."
+    },
+    {
+      "from_step": "ms3",
+      "to_step": "ms4",
+      "condition": null,
+      "rationale": "Model must be trained before evaluation."
+    }
+  ],
+  "variable_dependencies": [
+    {
+      "variable": "model_architecture",
+      "depends_on": [],
+      "source_reference": "Section 2",
+      "rationale": null
+    },
+    {
+      "variable": "dataset",
+      "depends_on": [],
+      "source_reference": "Section 3",
+      "rationale": null
+    },
+    {
+      "variable": "trained_model",
+      "depends_on": [
+        "model_architecture",
+        "dataset"
+      ],
+      "source_reference": "Section 4",
+      "rationale": null
+    },
+    {
+      "variable": "evaluation_metrics",
+      "depends_on": [
+        "trained_model"
+      ],
+      "source_reference": "Section 5",
+      "rationale": null
+    }
+  ]
+}

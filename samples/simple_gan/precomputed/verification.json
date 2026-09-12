@@ -1,0 +1,16 @@
+{
+  "files_checked": 5,
+  "passed": false,
+  "findings": [
+    {
+      "category": "syntax_error",
+      "file": "evaluation.py",
+      "detail": "expected an indented block after 'if' statement on line 87 (line 98)"
+    },
+    {
+      "category": "empty_main_block",
+      "file": "models.py",
+      "detail": "`if __name__ == \"__main__\":` block has no executable statement (only comments) \u2014 a real run would raise IndentationError."
+    }
+  ]
+}

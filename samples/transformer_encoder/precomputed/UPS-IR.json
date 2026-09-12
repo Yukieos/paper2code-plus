@@ -1,0 +1,599 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-12T17:34:54.687671+00:00",
+  "meta": {
+    "title": "MiniEncoder: A Small Transformer Encoder for Sentiment Classification",
+    "authors": [],
+    "venue": "",
+    "year": 2023
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "text": "How can we effectively classify sentiment in short text sequences using a compact Transformer model?",
+      "role": "primary",
+      "goal": "To develop a minimal Transformer encoder for binary sentiment classification.",
+      "parent": "q1",
+      "source_reference": "Abstract",
+      "source_text": "We present MiniEncoder, a compact Transformer-encoder model for binary sentiment classification of short text sequences."
+    },
+    {
+      "id": "q2",
+      "text": "What is the architecture of the MiniEncoder model?",
+      "role": "sub",
+      "goal": "To detail the components and structure of the MiniEncoder.",
+      "parent": "q1",
+      "source_reference": "Section 2",
+      "source_text": "Given an input sequence of token ids of length up to 128."
+    },
+    {
+      "id": "q3",
+      "text": "What dataset is used for training the MiniEncoder?",
+      "role": "sub",
+      "goal": "To describe the dataset characteristics and preprocessing steps.",
+      "parent": "q1",
+      "source_reference": "Section 3",
+      "source_text": "The model is trained on a binary sentiment classification dataset of short movie-review-style text snippets."
+    },
+    {
+      "id": "q4",
+      "text": "What training procedure is followed for the MiniEncoder?",
+      "role": "sub",
+      "goal": "To outline the training process including loss, optimizer, and hyperparameters.",
+      "parent": "q1",
+      "source_reference": "Section 4",
+      "source_text": "Loss: cross-entropy loss over the 2 output logits."
+    },
+    {
+      "id": "q5",
+      "text": "How is the performance of the MiniEncoder evaluated?",
+      "role": "sub",
+      "goal": "To specify the evaluation metrics and results.",
+      "parent": "q1",
+      "source_reference": "Section 5",
+      "source_text": "We report classification accuracy and F1 score on the held-out test split."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "name": "Sentiment Classification",
+      "description": "Classifying sentiment of short text sequences using the MiniEncoder model.",
+      "source_reference": "Abstract"
+    }
+  ],
+  "methods": [
+    {
+      "id": "m1",
+      "name": "MiniEncoder",
+      "description": "A compact Transformer encoder model for binary sentiment classification.",
+      "architecture": "Two Transformer encoder layers with multi-head self-attention and mean pooling.",
+      "uses_datasets": [
+        "d1"
+      ],
+      "uses_equations": [],
+      "source_reference": "Section 2",
+      "source_text": "MiniEncoder is designed as a minimal, easy-to-reproduce reference implementation of the encoder-only Transformer pattern."
+    }
+  ],
+  "method_steps": [
+    {
+      "id": "ms1",
+      "method_id": "m1",
+      "question_id": "q2",
+      "stage": "Architecture Definition",
+      "description": "Define the architecture of the MiniEncoder model including token embedding, positional encoding, encoder layers, pooling, and classification head.",
+      "inputs": [
+        "input token ids"
+      ],
+      "outputs": [
+        "model architecture"
+      ],
+      "hyperparameters": [
+        {
+          "name": "vocab_size",
+          "value": "20000",
+          "description": "Size of the vocabulary."
+        },
+        {
+          "name": "embedding_dim",
+          "value": "128",
+          "description": "Dimension of the embeddings."
+        },
+        {
+          "name": "num_heads",
+          "value": "4",
+          "description": "Number of attention heads."
+        },
+        {
+          "name": "head_dim",
+          "value": "32",
+          "description": "Dimension of each attention head."
+        },
+        {
+          "name": "dropout_rate",
+          "value": "0.1",
+          "description": "Dropout rate applied after attention and feed-forward."
+        }
+      ],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "unknown",
+      "target_metric": "unknown",
+      "notes": "unknown",
+      "depends_on": [],
+      "source_reference": "Section 2",
+      "source_text": "Given an input sequence of token ids of length up to 128."
+    },
+    {
+      "id": "ms2",
+      "method_id": "m1",
+      "question_id": "q3",
+      "stage": "Dataset Preparation",
+      "description": "Prepare the binary sentiment classification dataset including tokenization and mapping to ids.",
+      "inputs": [
+        "raw text data"
+      ],
+      "outputs": [
+        "tokenized and mapped dataset"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "unknown",
+      "target_metric": "unknown",
+      "notes": "unknown",
+      "depends_on": [],
+      "source_reference": "Section 3",
+      "source_text": "Text is lowercased, tokenized with a simple whitespace/punctuation tokenizer, and mapped to ids."
+    },
+    {
+      "id": "ms3",
+      "method_id": "m1",
+      "question_id": "q4",
+      "stage": "Training Procedure",
+      "description": "Train the MiniEncoder model using cross-entropy loss and Adam optimizer.",
+      "inputs": [
+        "prepared dataset"
+      ],
+      "outputs": [
+        "trained model"
+      ],
+      "hyperparameters": [
+        {
+          "name": "loss_function",
+          "value": "cross-entropy",
+          "description": "Loss function used for training."
+        },
+        {
+          "name": "optimizer",
+          "value": "Adam",
+          "description": "Optimizer used for training."
+        },
+        {
+          "name": "learning_rate",
+          "value": "3e-4",
+          "description": "Learning rate for the optimizer."
+        },
+        {
+          "name": "weight_decay",
+          "value": "0.01",
+          "description": "Weight decay for the optimizer."
+        },
+        {
+          "name": "batch_size",
+          "value": "32",
+          "description": "Batch size for training."
+        },
+        {
+          "name": "epochs",
+          "value": "3",
+          "description": "Number of training epochs."
+        },
+        {
+          "name": "lr_schedule",
+          "value": "linear warmup and decay",
+          "description": "Learning rate schedule."
+        }
+      ],
+      "loss": "cross-entropy",
+      "optimizer": "Adam",
+      "learning_rate": "3e-4",
+      "schedule": "linear warmup over the first 10% of training steps, then linear decay to 0",
+      "objective": "train the MiniEncoder model",
+      "target_metric": "unknown",
+      "notes": "Padding positions are masked out of the self-attention computation.",
+      "depends_on": [
+        "ms2"
+      ],
+      "source_reference": "Section 4",
+      "source_text": "Loss: cross-entropy loss over the 2 output logits."
+    },
+    {
+      "id": "ms4",
+      "method_id": "m1",
+      "question_id": "q5",
+      "stage": "Evaluation",
+      "description": "Evaluate the trained MiniEncoder model on the test dataset using accuracy and F1 score.",
+      "inputs": [
+        "test dataset",
+        "trained model"
+      ],
+      "outputs": [
+        "evaluation metrics"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "evaluate model performance",
+      "target_metric": "accuracy, F1 score",
+      "notes": "unknown",
+      "depends_on": [
+        "ms3"
+      ],
+      "source_reference": "Section 5",
+      "source_text": "We report classification accuracy and F1 score on the held-out test split."
+    },
+    {
+      "id": "ms5",
+      "method_id": "m1",
+      "question_id": "q1",
+      "stage": "Model Architecture",
+      "description": "Implement the MiniEncoder model architecture as defined, ensuring all components are correctly integrated.",
+      "inputs": [
+        "input token ids"
+      ],
+      "outputs": [
+        "implemented model"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "implement the architecture of MiniEncoder",
+      "target_metric": "unknown",
+      "notes": "Ensure that the model adheres to the specifications outlined in the architecture definition.",
+      "depends_on": [],
+      "source_reference": "Section 2",
+      "source_text": "MiniEncoder embeds input tokens, adds sinusoidal positional encodings, applies two Transformer encoder layers with multi-head self-attention, and pools the sequence into a single label."
+    }
+  ],
+  "datasets": [
+    {
+      "id": "d1",
+      "name": "Binary Sentiment Classification Dataset",
+      "split": "train/test",
+      "description": "A dataset of short movie-review-style text snippets for binary sentiment classification.",
+      "source_reference": "Section 3"
+    }
+  ],
+  "equations": [],
+  "experiments": [
+    {
+      "method": "m1",
+      "dataset": "d1",
+      "setup": "Trained MiniEncoder on the binary sentiment classification dataset.",
+      "metrics": [
+        {
+          "name": "accuracy",
+          "value": 87,
+          "unit": "%"
+        },
+        {
+          "name": "F1 score",
+          "value": "unknown",
+          "unit": "unknown"
+        }
+      ],
+      "source_reference": "Section 5",
+      "source_text": "MiniEncoder reaches approximately 87% test accuracy under this protocol."
+    }
+  ],
+  "relations": [
+    {
+      "id": "r1",
+      "from": "q2",
+      "to": "ms1",
+      "type": "defines",
+      "description": "The architecture definition question defines the model architecture method step."
+    },
+    {
+      "id": "r2",
+      "from": "q3",
+      "to": "ms2",
+      "type": "prepares",
+      "description": "The dataset preparation question prepares the dataset method step."
+    },
+    {
+      "id": "r3",
+      "from": "q4",
+      "to": "ms3",
+      "type": "trains",
+      "description": "The training procedure question trains the model method step."
+    },
+    {
+      "id": "r4",
+      "from": "q5",
+      "to": "ms4",
+      "type": "evaluates",
+      "description": "The evaluation question evaluates the model performance method step."
+    }
+  ],
+  "graphs": [
+    {
+      "id": "g1",
+      "name": "MiniEncoder Training Pipeline",
+      "description": "Flow of the MiniEncoder model training process from dataset preparation to model training.",
+      "focus": "Training Procedure",
+      "nodes": [
+        "q3",
+        "ms2",
+        "q4",
+        "ms3",
+        "q2",
+        "ms1"
+      ],
+      "edges": [
+        {
+          "from": "q3",
+          "to": "ms2",
+          "type": "derives",
+          "description": "Dataset preparation derives from the dataset question."
+        },
+        {
+          "from": "ms2",
+          "to": "ms3",
+          "type": "feeds",
+          "description": "Prepared dataset feeds into the training procedure."
+        },
+        {
+          "from": "q2",
+          "to": "ms1",
+          "type": "defines",
+          "description": "Architecture definition question defines the model architecture."
+        },
+        {
+          "from": "ms1",
+          "to": "ms2",
+          "type": "initializes",
+          "description": "Model architecture initializes the dataset preparation."
+        }
+      ],
+      "source_reference": "Section 4",
+      "source_text": "Loss: cross-entropy loss over the 2 output logits."
+    },
+    {
+      "id": "g2",
+      "name": "MiniEncoder Evaluation Pipeline",
+      "description": "Flow of the evaluation process for the MiniEncoder model.",
+      "focus": "Evaluation",
+      "nodes": [
+        "q5",
+        "ms4",
+        "q4",
+        "ms3"
+      ],
+      "edges": [
+        {
+          "from": "ms3",
+          "to": "ms4",
+          "type": "supports",
+          "description": "Trained model supports the evaluation process."
+        },
+        {
+          "from": "q4",
+          "to": "ms3",
+          "type": "trains",
+          "description": "Training procedure question trains the model."
+        },
+        {
+          "from": "q5",
+          "to": "ms4",
+          "type": "evaluates",
+          "description": "Evaluation question evaluates the model performance."
+        }
+      ],
+      "source_reference": "Section 5",
+      "source_text": "We report classification accuracy and F1 score on the held-out test split."
+    },
+    {
+      "name": "UPS-IR Method Flow",
+      "description": "Auto-generated DAG linking questions, methods, and method steps for traceability.",
+      "focus": "auto-flow",
+      "nodes": [
+        "m1",
+        "ms1",
+        "ms2",
+        "ms3",
+        "ms4",
+        "ms5",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5"
+      ],
+      "edges": [
+        {
+          "from": "m1",
+          "to": "ms1",
+          "type": "implements",
+          "description": "MiniEncoder -> Define the architecture of the MiniEncoder model including token embedding, positional encoding, encoder layers, pooling, and classification head. (implements)"
+        },
+        {
+          "from": "q2",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What is the architecture of the MiniEncoder model? -> MiniEncoder (addresses)"
+        },
+        {
+          "from": "m1",
+          "to": "ms2",
+          "type": "implements",
+          "description": "MiniEncoder -> Prepare the binary sentiment classification dataset including tokenization and mapping to ids. (implements)"
+        },
+        {
+          "from": "q3",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What dataset is used for training the MiniEncoder? -> MiniEncoder (addresses)"
+        },
+        {
+          "from": "m1",
+          "to": "ms3",
+          "type": "implements",
+          "description": "MiniEncoder -> Train the MiniEncoder model using cross-entropy loss and Adam optimizer. (implements)"
+        },
+        {
+          "from": "q4",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What training procedure is followed for the MiniEncoder? -> MiniEncoder (addresses)"
+        },
+        {
+          "from": "ms2",
+          "to": "ms3",
+          "type": "depends_on",
+          "description": "Prepare the binary sentiment classification dataset including tokenization and mapping to ids. -> Train the MiniEncoder model using cross-entropy loss and Adam optimizer. (depends_on)"
+        },
+        {
+          "from": "m1",
+          "to": "ms4",
+          "type": "implements",
+          "description": "MiniEncoder -> Evaluate the trained MiniEncoder model on the test dataset using accuracy and F1 score. (implements)"
+        },
+        {
+          "from": "q5",
+          "to": "m1",
+          "type": "addresses",
+          "description": "How is the performance of the MiniEncoder evaluated? -> MiniEncoder (addresses)"
+        },
+        {
+          "from": "ms3",
+          "to": "ms4",
+          "type": "depends_on",
+          "description": "Train the MiniEncoder model using cross-entropy loss and Adam optimizer. -> Evaluate the trained MiniEncoder model on the test dataset using accuracy and F1 score. (depends_on)"
+        },
+        {
+          "from": "m1",
+          "to": "ms5",
+          "type": "implements",
+          "description": "MiniEncoder -> Implement the MiniEncoder model architecture as defined, ensuring all components are correctly integrated. (implements)"
+        },
+        {
+          "from": "q1",
+          "to": "m1",
+          "type": "addresses",
+          "description": "How can we effectively classify sentiment in short text sequences using a compact Transformer model? -> MiniEncoder (addresses)"
+        }
+      ],
+      "source_reference": "Abstract; Section 2; Section 3; Section 4; Section 5",
+      "source_text": "Derived automatically from structured UPS-IR fields to enrich the pipeline view.",
+      "id": "g3"
+    }
+  ],
+  "sections": [
+    {
+      "id": "s1",
+      "title": "Abstract",
+      "level": 1,
+      "summary": "Introduction of MiniEncoder, a compact Transformer-encoder model for sentiment classification.",
+      "key_points": [
+        "Compact model",
+        "Binary sentiment classification"
+      ],
+      "source_reference": "Abstract",
+      "source_text": "We present MiniEncoder, a compact Transformer-encoder model for binary sentiment classification of short text sequences."
+    },
+    {
+      "id": "s2",
+      "title": "1. Introduction",
+      "level": 1,
+      "summary": "Overview of the importance of self-attention-based encoders in text classification.",
+      "key_points": [
+        "Self-attention encoders",
+        "MiniEncoder as a reference implementation"
+      ],
+      "source_reference": "Section 1",
+      "source_text": "Self-attention-based encoders are the standard building block for modern text classification."
+    },
+    {
+      "id": "s3",
+      "title": "2. Model Architecture",
+      "level": 1,
+      "summary": "Detailed description of the MiniEncoder architecture.",
+      "key_points": [
+        "Token embedding",
+        "Positional encoding",
+        "Encoder layers",
+        "Pooling",
+        "Classification head"
+      ],
+      "source_reference": "Section 2",
+      "source_text": "Given an input sequence of token ids of length up to 128."
+    },
+    {
+      "id": "s4",
+      "title": "3. Dataset",
+      "level": 1,
+      "summary": "Description of the dataset used for training the MiniEncoder.",
+      "key_points": [
+        "Binary sentiment classification dataset",
+        "Tokenization and mapping"
+      ],
+      "source_reference": "Section 3",
+      "source_text": "The model is trained on a binary sentiment classification dataset of short movie-review-style text snippets."
+    },
+    {
+      "id": "s5",
+      "title": "4. Training Procedure",
+      "level": 1,
+      "summary": "Outline of the training procedure including loss and optimizer.",
+      "key_points": [
+        "Cross-entropy loss",
+        "Adam optimizer",
+        "Training epochs"
+      ],
+      "source_reference": "Section 4",
+      "source_text": "Loss: cross-entropy loss over the 2 output logits."
+    },
+    {
+      "id": "s6",
+      "title": "5. Evaluation",
+      "level": 1,
+      "summary": "Evaluation metrics and results of the MiniEncoder.",
+      "key_points": [
+        "Classification accuracy",
+        "F1 score",
+        "Parameter count"
+      ],
+      "source_reference": "Section 5",
+      "source_text": "We report classification accuracy and F1 score on the held-out test split."
+    },
+    {
+      "id": "s7",
+      "title": "6. Limitations",
+      "level": 1,
+      "summary": "Discussion of the limitations of the MiniEncoder model.",
+      "key_points": [
+        "Limited encoder layers",
+        "Single dataset evaluation"
+      ],
+      "source_reference": "Section 6",
+      "source_text": "MiniEncoder uses only 2 encoder layers and a small embedding dimension."
+    }
+  ],
+  "figures": [],
+  "algorithms": [],
+  "parameters": [],
+  "losses": [],
+  "training_pipeline": [],
+  "optimizations": []
+}

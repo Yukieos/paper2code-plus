@@ -1,0 +1,601 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-12T17:38:54.953646+00:00",
+  "meta": {
+    "title": "MiniGAN: A Small Generative Adversarial Network for Digit Image Synthesis",
+    "authors": [],
+    "venue": "",
+    "year": 2023
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "text": "How can we synthesize 28x28 grayscale digit images using a compact GAN?",
+      "role": "primary",
+      "goal": "To develop a minimal GAN architecture for digit image synthesis.",
+      "parent": "q1",
+      "source_reference": "Abstract",
+      "source_text": "We present MiniGAN, a compact generative adversarial network that synthesizes 28x28 grayscale digit images from random noise."
+    },
+    {
+      "id": "q2",
+      "text": "What is the architecture of the generator in MiniGAN?",
+      "role": "sub",
+      "goal": "To define the structure and function of the generator.",
+      "parent": "q1",
+      "source_reference": "Section 2.1",
+      "source_text": "The generator maps a latent noise vector to a 28x28 grayscale image."
+    },
+    {
+      "id": "q3",
+      "text": "What is the architecture of the discriminator in MiniGAN?",
+      "role": "sub",
+      "goal": "To define the structure and function of the discriminator.",
+      "parent": "q1",
+      "source_reference": "Section 2.2",
+      "source_text": "The discriminator maps a 28x28 image to a real/fake probability."
+    },
+    {
+      "id": "q4",
+      "text": "What dataset is used for training MiniGAN?",
+      "role": "sub",
+      "goal": "To identify the dataset and its characteristics.",
+      "parent": "q1",
+      "source_reference": "Section 3",
+      "source_text": "The model is trained on a standard 10-class handwritten-digit dataset of 28x28 grayscale images."
+    },
+    {
+      "id": "q5",
+      "text": "What is the training procedure for MiniGAN?",
+      "role": "sub",
+      "goal": "To outline the steps and components involved in training.",
+      "parent": "q1",
+      "source_reference": "Section 4",
+      "source_text": "Training Procedure"
+    },
+    {
+      "id": "q6",
+      "text": "How is MiniGAN evaluated?",
+      "role": "sub",
+      "goal": "To describe the evaluation metrics and methods used.",
+      "parent": "q1",
+      "source_reference": "Section 5",
+      "source_text": "We report the generator and discriminator loss curves over training."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "name": "Image Synthesis",
+      "description": "Generate 28x28 grayscale digit images using MiniGAN.",
+      "source_reference": "Abstract"
+    },
+    {
+      "id": "t2",
+      "name": "Model Training",
+      "description": "Train the MiniGAN model using the specified dataset and training procedure.",
+      "source_reference": "Section 4"
+    },
+    {
+      "id": "t3",
+      "name": "Model Evaluation",
+      "description": "Evaluate the performance of MiniGAN using loss curves and FID.",
+      "source_reference": "Section 5"
+    }
+  ],
+  "methods": [
+    {
+      "id": "m1",
+      "name": "MiniGAN Architecture",
+      "description": "A compact GAN architecture consisting of a fully-connected generator and discriminator.",
+      "architecture": "Fully-connected layers with LeakyReLU activations and Tanh output for generator; LeakyReLU and Sigmoid for discriminator.",
+      "uses_datasets": [
+        "d1"
+      ],
+      "uses_equations": [],
+      "source_reference": "Section 2",
+      "source_text": "This paper describes MiniGAN, a small fully-connected GAN intended as a clear reference implementation."
+    },
+    {
+      "id": "m2",
+      "name": "Training Procedure",
+      "description": "The process of training MiniGAN using the standard adversarial minimax objective.",
+      "architecture": "Standard GAN training with Adam optimizer.",
+      "uses_datasets": [
+        "d1"
+      ],
+      "uses_equations": [],
+      "source_reference": "Section 4",
+      "source_text": "Training Procedure"
+    },
+    {
+      "id": "m3",
+      "name": "Evaluation Metrics",
+      "description": "Metrics used to evaluate the performance of MiniGAN, including loss curves and FID.",
+      "architecture": "Loss curves and FID computation.",
+      "uses_datasets": [
+        "d1"
+      ],
+      "uses_equations": [],
+      "source_reference": "Section 5",
+      "source_text": "We report the generator and discriminator loss curves over training."
+    }
+  ],
+  "method_steps": [
+    {
+      "id": "ms1",
+      "method_id": "m1",
+      "question_id": "q2",
+      "stage": "Generator Architecture",
+      "description": "Define the generator structure and activation functions.",
+      "inputs": [
+        "latent vector z"
+      ],
+      "outputs": [
+        "28x28 grayscale image"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Generate realistic digit images.",
+      "target_metric": "unknown",
+      "notes": "The generator uses LeakyReLU and Tanh activations.",
+      "depends_on": [],
+      "source_reference": "Section 2.1",
+      "source_text": "The generator maps a latent noise vector to a 28x28 grayscale image."
+    },
+    {
+      "id": "ms2",
+      "method_id": "m1",
+      "question_id": "q3",
+      "stage": "Discriminator Architecture",
+      "description": "Define the discriminator structure and activation functions.",
+      "inputs": [
+        "28x28 grayscale image"
+      ],
+      "outputs": [
+        "real/fake probability"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Distinguish real images from generated images.",
+      "target_metric": "unknown",
+      "notes": "The discriminator uses LeakyReLU and Sigmoid activations.",
+      "depends_on": [],
+      "source_reference": "Section 2.2",
+      "source_text": "The discriminator maps a 28x28 image to a real/fake probability."
+    },
+    {
+      "id": "ms3",
+      "method_id": "m2",
+      "question_id": "q5",
+      "stage": "Training Loop",
+      "description": "Execute the training loop for MiniGAN.",
+      "inputs": [
+        "real images",
+        "latent vectors"
+      ],
+      "outputs": [
+        "updated generator and discriminator"
+      ],
+      "hyperparameters": [
+        {
+          "name": "batch size",
+          "value": "128",
+          "description": "Number of samples per gradient update."
+        },
+        {
+          "name": "epochs",
+          "value": "20",
+          "description": "Number of training epochs."
+        },
+        {
+          "name": "learning rate",
+          "value": "2e-4",
+          "description": "Learning rate for the Adam optimizer."
+        },
+        {
+          "name": "betas",
+          "value": "(0.5, 0.999)",
+          "description": "Beta parameters for the Adam optimizer."
+        }
+      ],
+      "loss": "binary cross-entropy",
+      "optimizer": "Adam",
+      "learning_rate": "2e-4",
+      "schedule": "unknown",
+      "objective": "Train the generator and discriminator in opposition.",
+      "target_metric": "unknown",
+      "notes": "The training loop alternates between updating the discriminator and generator.",
+      "depends_on": [],
+      "source_reference": "Section 4",
+      "source_text": "Training loop: for each batch, first update the discriminator..."
+    },
+    {
+      "id": "ms4",
+      "method_id": "m3",
+      "question_id": "q6",
+      "stage": "Evaluation",
+      "description": "Evaluate the performance of MiniGAN using loss curves and FID.",
+      "inputs": [
+        "generated images",
+        "real images"
+      ],
+      "outputs": [
+        "loss curves",
+        "FID score"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Assess the quality of generated images.",
+      "target_metric": "FID",
+      "notes": "FID is computed between generated and real images.",
+      "depends_on": [],
+      "source_reference": "Section 5",
+      "source_text": "We report the generator and discriminator loss curves over training."
+    },
+    {
+      "id": "ms5",
+      "method_id": "m1",
+      "question_id": "q1",
+      "stage": "Generator Architecture",
+      "description": "Define the generator structure and activation functions.",
+      "inputs": [
+        "latent vector z"
+      ],
+      "outputs": [
+        "28x28 grayscale image"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Generate realistic digit images.",
+      "target_metric": "unknown",
+      "notes": "The generator uses LeakyReLU and Tanh activations.",
+      "depends_on": [],
+      "source_reference": "Section 2.1",
+      "source_text": "The generator maps a latent noise vector to a 28x28 grayscale image."
+    },
+    {
+      "id": "ms6",
+      "method_id": "m2",
+      "question_id": "q4",
+      "stage": "Evaluation",
+      "description": "Evaluate the performance of MiniGAN using loss curves and FID.",
+      "inputs": [
+        "generated images",
+        "real images"
+      ],
+      "outputs": [
+        "loss curves",
+        "FID score"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Assess the quality of generated images.",
+      "target_metric": "FID",
+      "notes": "FID is computed between generated and real images.",
+      "depends_on": [],
+      "source_reference": "Section 5",
+      "source_text": "We report the generator and discriminator loss curves over training."
+    }
+  ],
+  "datasets": [
+    {
+      "id": "d1",
+      "name": "Handwritten Digit Dataset",
+      "split": "train",
+      "description": "A standard 10-class dataset of 28x28 grayscale images with 60,000 training images.",
+      "source_reference": "Section 3"
+    }
+  ],
+  "equations": [
+    {
+      "id": "e1",
+      "latex": "L = -[y \\log(D(x)) + (1 - y) \\log(1 - D(G(z)))]",
+      "units": "unknown",
+      "description": "Standard non-saturating GAN loss.",
+      "source_reference": "Section 4"
+    }
+  ],
+  "experiments": [
+    {
+      "method": "m2",
+      "dataset": "d1",
+      "setup": "Train MiniGAN on the handwritten-digit dataset.",
+      "metrics": [
+        {
+          "name": "FID",
+          "value": 0.0,
+          "unit": "unknown"
+        }
+      ],
+      "source_reference": "Section 5"
+    }
+  ],
+  "relations": [],
+  "graphs": [
+    {
+      "id": "g1",
+      "name": "MiniGAN Training Pipeline",
+      "description": "Overview of the training process for MiniGAN.",
+      "focus": "Training Procedure",
+      "nodes": [
+        "q1",
+        "q5",
+        "m2",
+        "ms3"
+      ],
+      "edges": [
+        {
+          "from": "q1",
+          "to": "q5",
+          "type": "answers",
+          "description": "Defines the training procedure."
+        },
+        {
+          "from": "q5",
+          "to": "m2",
+          "type": "requires",
+          "description": "Training procedure requires the model architecture."
+        },
+        {
+          "from": "m2",
+          "to": "ms3",
+          "type": "supports",
+          "description": "Training procedure is executed through the training loop."
+        }
+      ],
+      "source_reference": "Section 4",
+      "source_text": "Training Procedure"
+    },
+    {
+      "id": "g2",
+      "name": "MiniGAN Evaluation Pipeline",
+      "description": "Overview of the evaluation process for MiniGAN.",
+      "focus": "Evaluation",
+      "nodes": [
+        "q1",
+        "q6",
+        "m3",
+        "ms4"
+      ],
+      "edges": [
+        {
+          "from": "q1",
+          "to": "q6",
+          "type": "answers",
+          "description": "Defines the evaluation process."
+        },
+        {
+          "from": "q6",
+          "to": "m3",
+          "type": "requires",
+          "description": "Evaluation requires metrics."
+        },
+        {
+          "from": "m3",
+          "to": "ms4",
+          "type": "supports",
+          "description": "Evaluation is executed through the evaluation method."
+        }
+      ],
+      "source_reference": "Section 5",
+      "source_text": "We report the generator and discriminator loss curves over training."
+    },
+    {
+      "name": "UPS-IR Method Flow",
+      "description": "Auto-generated DAG linking questions, methods, and method steps for traceability.",
+      "focus": "auto-flow",
+      "nodes": [
+        "m1",
+        "m2",
+        "m3",
+        "ms1",
+        "ms2",
+        "ms3",
+        "ms4",
+        "ms5",
+        "ms6",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5",
+        "q6"
+      ],
+      "edges": [
+        {
+          "from": "m1",
+          "to": "ms1",
+          "type": "implements",
+          "description": "MiniGAN Architecture -> Define the generator structure and activation functions. (implements)"
+        },
+        {
+          "from": "q2",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What is the architecture of the generator in MiniGAN? -> MiniGAN Architecture (addresses)"
+        },
+        {
+          "from": "m1",
+          "to": "ms2",
+          "type": "implements",
+          "description": "MiniGAN Architecture -> Define the discriminator structure and activation functions. (implements)"
+        },
+        {
+          "from": "q3",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What is the architecture of the discriminator in MiniGAN? -> MiniGAN Architecture (addresses)"
+        },
+        {
+          "from": "m2",
+          "to": "ms3",
+          "type": "implements",
+          "description": "Training Procedure -> Execute the training loop for MiniGAN. (implements)"
+        },
+        {
+          "from": "q5",
+          "to": "m2",
+          "type": "addresses",
+          "description": "What is the training procedure for MiniGAN? -> Training Procedure (addresses)"
+        },
+        {
+          "from": "m3",
+          "to": "ms4",
+          "type": "implements",
+          "description": "Evaluation Metrics -> Evaluate the performance of MiniGAN using loss curves and FID. (implements)"
+        },
+        {
+          "from": "q6",
+          "to": "m3",
+          "type": "addresses",
+          "description": "How is MiniGAN evaluated? -> Evaluation Metrics (addresses)"
+        },
+        {
+          "from": "m1",
+          "to": "ms5",
+          "type": "implements",
+          "description": "MiniGAN Architecture -> Define the generator structure and activation functions. (implements)"
+        },
+        {
+          "from": "q1",
+          "to": "m1",
+          "type": "addresses",
+          "description": "How can we synthesize 28x28 grayscale digit images using a compact GAN? -> MiniGAN Architecture (addresses)"
+        },
+        {
+          "from": "m2",
+          "to": "ms6",
+          "type": "implements",
+          "description": "Training Procedure -> Evaluate the performance of MiniGAN using loss curves and FID. (implements)"
+        },
+        {
+          "from": "q4",
+          "to": "m2",
+          "type": "addresses",
+          "description": "What dataset is used for training MiniGAN? -> Training Procedure (addresses)"
+        }
+      ],
+      "source_reference": "Abstract; Section 2; Section 2.1; Section 2.2; Section 3; Section 4; Section 5",
+      "source_text": "Derived automatically from structured UPS-IR fields to enrich the pipeline view.",
+      "id": "g3"
+    }
+  ],
+  "sections": [
+    {
+      "id": "s1",
+      "title": "Abstract",
+      "level": 1,
+      "summary": "Introduction to MiniGAN and its purpose.",
+      "key_points": [
+        "Compact GAN for digit image synthesis."
+      ],
+      "source_reference": "Abstract",
+      "source_text": "We present MiniGAN, a compact generative adversarial network..."
+    },
+    {
+      "id": "s2",
+      "title": "Introduction",
+      "level": 1,
+      "summary": "Overview of GANs and the motivation for MiniGAN.",
+      "key_points": [
+        "Generative adversarial networks",
+        "MiniGAN as a reference implementation."
+      ],
+      "source_reference": "Section 1",
+      "source_text": "Generative adversarial networks (GANs) train a generator and a discriminator in opposition..."
+    },
+    {
+      "id": "s3",
+      "title": "Model Architecture",
+      "level": 1,
+      "summary": "Description of the generator and discriminator architectures.",
+      "key_points": [
+        "Generator and discriminator structures."
+      ],
+      "source_reference": "Section 2",
+      "source_text": "This paper describes MiniGAN, a small fully-connected GAN..."
+    },
+    {
+      "id": "s4",
+      "title": "Dataset",
+      "level": 1,
+      "summary": "Details about the dataset used for training.",
+      "key_points": [
+        "10-class handwritten-digit dataset",
+        "60,000 training images."
+      ],
+      "source_reference": "Section 3",
+      "source_text": "The model is trained on a standard 10-class handwritten-digit dataset..."
+    },
+    {
+      "id": "s5",
+      "title": "Training Procedure",
+      "level": 1,
+      "summary": "Outline of the training procedure for MiniGAN.",
+      "key_points": [
+        "Loss function",
+        "Optimizer",
+        "Training loop."
+      ],
+      "source_reference": "Section 4",
+      "source_text": "Training Procedure"
+    },
+    {
+      "id": "s6",
+      "title": "Evaluation",
+      "level": 1,
+      "summary": "Metrics and methods for evaluating MiniGAN.",
+      "key_points": [
+        "Loss curves",
+        "FID as a primary metric."
+      ],
+      "source_reference": "Section 5",
+      "source_text": "We report the generator and discriminator loss curves over training..."
+    },
+    {
+      "id": "s7",
+      "title": "Limitations",
+      "level": 1,
+      "summary": "Discussion of the limitations of MiniGAN.",
+      "key_points": [
+        "Fully-connected layers",
+        "Unconditional generation."
+      ],
+      "source_reference": "Section 6",
+      "source_text": "MiniGAN uses simple fully-connected layers rather than convolutional layers..."
+    }
+  ],
+  "figures": [],
+  "algorithms": [],
+  "parameters": [],
+  "losses": [
+    {
+      "id": "l1",
+      "name": "Binary Cross-Entropy Loss",
+      "formula": "L = -[y \\log(D(x)) + (1 - y) \\log(1 - D(G(z)))]",
+      "description": "Loss function used for training the discriminator and generator.",
+      "related_methods": [
+        "m2"
+      ],
+      "source_reference": "Section 4"
+    }
+  ],
+  "training_pipeline": [],
+  "optimizations": []
+}

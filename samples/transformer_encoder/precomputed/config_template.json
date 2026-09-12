@@ -1,0 +1,109 @@
+{
+  "notes": "Fill null values with paper-sourced or experimental settings before running main.py.",
+  "global": {
+    "vocab_size": {
+      "value": "20000",
+      "description": "Size of the vocabulary for tokenization.",
+      "risk": "low",
+      "defined_in_paper": true
+    },
+    "embedding_dim": {
+      "value": "128",
+      "description": "Dimension of the embeddings for the model.",
+      "risk": "low",
+      "defined_in_paper": true
+    },
+    "num_heads": {
+      "value": "4",
+      "description": "Number of attention heads in the Transformer model.",
+      "risk": "low",
+      "defined_in_paper": true
+    },
+    "batch_size": {
+      "value": null,
+      "description": "Batch size for training the model.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "dropout_rate": {
+      "value": null,
+      "description": "Dropout rate applied after attention and feed-forward layers.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "epochs": {
+      "value": null,
+      "description": "Number of training epochs.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "head_dim": {
+      "value": null,
+      "description": "Dimension of each attention head, derived from embedding_dim and num_heads.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "learning_rate": {
+      "value": null,
+      "description": "Learning rate for the optimizer during training.",
+      "risk": "medium",
+      "defined_in_paper": false
+    }
+  },
+  "modules": {
+    "Derived from embedding_dim and num_heads; crucial for attention mechanism.": {
+      "head_dim": {
+        "value": "32",
+        "description": "Dimension of each attention head, derived from embedding_dim and num_heads.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "Regularization technique to prevent overfitting; applied after attention and feed-forward layers.": {
+      "dropout_rate": {
+        "value": "0.1",
+        "description": "Dropout rate applied after attention and feed-forward layers.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "Controls how much to change the model in response to the estimated error each time the model weights are updated.": {
+      "learning_rate": {
+        "value": "3e-4",
+        "description": "Learning rate for the optimizer during training.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "Number of training examples utilized in one iteration.": {
+      "batch_size": {
+        "value": "32",
+        "description": "Batch size for training the model.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "Number of complete passes through the training dataset.": {
+      "epochs": {
+        "value": "3",
+        "description": "Number of training epochs.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "main.py": {
+      "config": {
+        "value": null,
+        "description": "Configuration file path for model parameters.",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "seed": {
+        "value": null,
+        "description": "Seed for random number generators.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    }
+  }
+}

@@ -1,0 +1,734 @@
+{
+  "version": "1.0",
+  "generated_at": "2026-09-12T17:28:06.617877+00:00",
+  "meta": {
+    "title": "TinyConvNet: A Small Convolutional Classifier for Grayscale Digit Recognition",
+    "authors": [],
+    "venue": "",
+    "year": 2023
+  },
+  "questions": [
+    {
+      "id": "q1",
+      "text": "How effective is TinyConvNet for classifying grayscale digit images?",
+      "role": "primary",
+      "goal": "To evaluate the performance of TinyConvNet on a digit classification task.",
+      "parent": "q1",
+      "source_reference": "Abstract",
+      "source_text": "TinyConvNet reaches over 98% test accuracy on a held-out split of a standard handwritten-digit dataset."
+    },
+    {
+      "id": "q2",
+      "text": "What is the architecture of TinyConvNet?",
+      "role": "sub",
+      "goal": "To describe the components and structure of the TinyConvNet model.",
+      "parent": "q1",
+      "source_reference": "2. Model Architecture",
+      "source_text": "TinyConvNet processes a single-channel 28x28 input through the following stages."
+    },
+    {
+      "id": "q3",
+      "text": "What dataset is used for training TinyConvNet?",
+      "role": "sub",
+      "goal": "To identify the dataset characteristics and preprocessing steps.",
+      "parent": "q1",
+      "source_reference": "3. Dataset",
+      "source_text": "The model is trained on a standard 10-class handwritten-digit dataset of 28x28 grayscale images."
+    },
+    {
+      "id": "q4",
+      "text": "What training procedure is followed for TinyConvNet?",
+      "role": "sub",
+      "goal": "To outline the training process including loss, optimizer, and hyperparameters.",
+      "parent": "q1",
+      "source_reference": "4. Training Procedure",
+      "source_text": "The model is trained with cross-entropy loss and the Adam optimizer."
+    },
+    {
+      "id": "q5",
+      "text": "How is TinyConvNet evaluated?",
+      "role": "sub",
+      "goal": "To detail the evaluation metrics and methods used.",
+      "parent": "q1",
+      "source_reference": "5. Evaluation",
+      "source_text": "We report top-1 accuracy on the 10,000-image held-out test split."
+    }
+  ],
+  "tasks": [
+    {
+      "id": "t1",
+      "name": "Digit Classification",
+      "description": "Classifying 28x28 grayscale images into 10 digit classes (0-9).",
+      "source_reference": "Abstract"
+    }
+  ],
+  "methods": [
+    {
+      "id": "m1",
+      "name": "TinyConvNet",
+      "description": "A compact convolutional neural network for digit classification with two convolutional blocks and a fully-connected head.",
+      "architecture": "Two convolutional blocks followed by a fully connected layer.",
+      "uses_datasets": [
+        "d1"
+      ],
+      "uses_equations": [],
+      "source_reference": "2. Model Architecture",
+      "source_text": "TinyConvNet processes a single-channel 28x28 input through the following stages."
+    }
+  ],
+  "method_steps": [
+    {
+      "id": "ms1",
+      "method_id": "m1",
+      "question_id": "q2",
+      "stage": "Architecture Definition",
+      "description": "Define the architecture of TinyConvNet including convolutional blocks and fully connected layers.",
+      "inputs": [
+        "28x28 grayscale images"
+      ],
+      "outputs": [
+        "Class logits for 10 digit classes"
+      ],
+      "hyperparameters": [],
+      "loss": "cross-entropy",
+      "optimizer": "Adam",
+      "learning_rate": "1e-3",
+      "schedule": "unknown",
+      "objective": "Minimize classification error",
+      "target_metric": "accuracy",
+      "notes": "The model is designed to be minimal and efficient.",
+      "depends_on": [],
+      "source_reference": "2. Model Architecture",
+      "source_text": "TinyConvNet processes a single-channel 28x28 input through the following stages."
+    },
+    {
+      "id": "ms2",
+      "method_id": "m1",
+      "question_id": "q3",
+      "stage": "Dataset Preparation",
+      "description": "Prepare the dataset by normalizing and standardizing pixel values.",
+      "inputs": [
+        "Raw grayscale images"
+      ],
+      "outputs": [
+        "Normalized and standardized images"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Prepare data for training",
+      "target_metric": "unknown",
+      "notes": "Dataset mean=0.1307 and std=0.3081.",
+      "depends_on": [],
+      "source_reference": "3. Dataset",
+      "source_text": "Pixel values are normalized to the range [0, 1] by dividing by 255."
+    },
+    {
+      "id": "ms3",
+      "method_id": "m1",
+      "question_id": "q4",
+      "stage": "Training",
+      "description": "Train TinyConvNet using the specified loss and optimizer.",
+      "inputs": [
+        "Normalized training images",
+        "Labels"
+      ],
+      "outputs": [
+        "Trained model"
+      ],
+      "hyperparameters": [
+        {
+          "name": "batch_size",
+          "value": "64",
+          "description": "Number of samples per gradient update."
+        },
+        {
+          "name": "epochs",
+          "value": "5",
+          "description": "Number of epochs to train."
+        }
+      ],
+      "loss": "cross-entropy",
+      "optimizer": "Adam",
+      "learning_rate": "1e-3",
+      "schedule": "none",
+      "objective": "Train the model to classify digits.",
+      "target_metric": "validation accuracy",
+      "notes": "Model checkpoint with the best validation accuracy is saved.",
+      "depends_on": [
+        "ms2"
+      ],
+      "source_reference": "4. Training Procedure",
+      "source_text": "Training and validation loss/accuracy are logged after every epoch."
+    },
+    {
+      "id": "ms4",
+      "method_id": "m1",
+      "question_id": "q5",
+      "stage": "Evaluation",
+      "description": "Evaluate the trained model on the test dataset.",
+      "inputs": [
+        "Test images",
+        "Trained model"
+      ],
+      "outputs": [
+        "Test accuracy",
+        "Confusion matrix"
+      ],
+      "hyperparameters": [],
+      "loss": "unknown",
+      "optimizer": "unknown",
+      "learning_rate": "unknown",
+      "schedule": "unknown",
+      "objective": "Assess model performance on unseen data.",
+      "target_metric": "top-1 accuracy",
+      "notes": "Also report average inference latency per image.",
+      "depends_on": [
+        "ms3"
+      ],
+      "source_reference": "5. Evaluation",
+      "source_text": "We report top-1 accuracy on the 10,000-image held-out test split."
+    },
+    {
+      "id": "ms5",
+      "method_id": "m1",
+      "question_id": "q4",
+      "stage": "Model Definition",
+      "description": "Define the model architecture including convolutional blocks and fully connected layers.",
+      "inputs": [
+        "None"
+      ],
+      "outputs": [
+        "Model architecture definition"
+      ],
+      "hyperparameters": [],
+      "loss": "none",
+      "optimizer": "none",
+      "learning_rate": "none",
+      "schedule": "none",
+      "objective": "Establish the model structure for training.",
+      "target_metric": "none",
+      "notes": "This step is crucial for understanding the model's capabilities.",
+      "depends_on": [],
+      "source_reference": "2. Model Architecture",
+      "source_text": "TinyConvNet processes a single-channel 28x28 input through the following stages."
+    },
+    {
+      "id": "ms6",
+      "method_id": "m1",
+      "question_id": "q5",
+      "stage": "Performance Reporting",
+      "description": "Report the performance metrics of the trained model.",
+      "inputs": [
+        "Test accuracy",
+        "Confusion matrix"
+      ],
+      "outputs": [
+        "Final performance report"
+      ],
+      "hyperparameters": [],
+      "loss": "none",
+      "optimizer": "none",
+      "learning_rate": "none",
+      "schedule": "none",
+      "objective": "Summarize the model's performance on the test dataset.",
+      "target_metric": "top-1 accuracy",
+      "notes": "Includes average inference latency per image.",
+      "depends_on": [
+        "ms4"
+      ],
+      "source_reference": "5. Evaluation",
+      "source_text": "We report top-1 accuracy on the 10,000-image held-out test split."
+    },
+    {
+      "id": "ms7",
+      "method_id": "m1",
+      "question_id": "q5",
+      "stage": "Confusion Matrix Calculation",
+      "description": "Calculate the confusion matrix based on the model's predictions.",
+      "inputs": [
+        "Predictions",
+        "True labels"
+      ],
+      "outputs": [
+        "Confusion matrix"
+      ],
+      "hyperparameters": [],
+      "loss": "none",
+      "optimizer": "none",
+      "learning_rate": "none",
+      "schedule": "none",
+      "objective": "Visualize the model's classification performance.",
+      "target_metric": "none",
+      "notes": "Helps in understanding misclassifications.",
+      "depends_on": [
+        "ms4"
+      ],
+      "source_reference": "5. Evaluation",
+      "source_text": "We report top-1 accuracy on the 10,000-image held-out test split."
+    },
+    {
+      "id": "ms8",
+      "method_id": "m1",
+      "question_id": "q1",
+      "stage": "Model Definition",
+      "description": "Define the model architecture including convolutional blocks and fully connected layers.",
+      "inputs": [
+        "None"
+      ],
+      "outputs": [
+        "Model architecture definition"
+      ],
+      "hyperparameters": [],
+      "loss": "none",
+      "optimizer": "none",
+      "learning_rate": "none",
+      "schedule": "none",
+      "objective": "Establish the model structure for training.",
+      "target_metric": "none",
+      "notes": "This step is crucial for understanding the model's capabilities.",
+      "depends_on": [],
+      "source_reference": "2. Model Architecture",
+      "source_text": "TinyConvNet processes a single-channel 28x28 input through the following stages."
+    }
+  ],
+  "datasets": [
+    {
+      "id": "d1",
+      "name": "Handwritten Digit Dataset",
+      "split": "train",
+      "description": "A standard dataset of 28x28 grayscale images of handwritten digits.",
+      "source_reference": "3. Dataset"
+    }
+  ],
+  "equations": [
+    {
+      "id": "e1",
+      "latex": "L(y, \\hat{y}) = -\\sum_{i=1}^{C} y_i \\log(\\hat{y}_i)",
+      "units": "unknown",
+      "description": "Cross-entropy loss function for multi-class classification.",
+      "source_reference": "4. Training Procedure"
+    }
+  ],
+  "experiments": [
+    {
+      "method": "m1",
+      "dataset": "d1",
+      "setup": "Trained TinyConvNet on the standard handwritten-digit dataset.",
+      "metrics": [
+        {
+          "name": "test accuracy",
+          "value": 98.3,
+          "unit": "%"
+        }
+      ],
+      "source_reference": "5. Evaluation"
+    }
+  ],
+  "relations": [
+    {
+      "from": "q1",
+      "to": "q2",
+      "type": "answers",
+      "rationale": "The architecture of TinyConvNet is essential to understanding its effectiveness.",
+      "source_reference": "2. Model Architecture"
+    },
+    {
+      "from": "q1",
+      "to": "q3",
+      "type": "answers",
+      "rationale": "The dataset used directly impacts the model's performance.",
+      "source_reference": "3. Dataset"
+    },
+    {
+      "from": "q1",
+      "to": "q4",
+      "type": "answers",
+      "rationale": "The training procedure defines how the model learns from the data.",
+      "source_reference": "4. Training Procedure"
+    },
+    {
+      "from": "q1",
+      "to": "q5",
+      "type": "answers",
+      "rationale": "Evaluation metrics provide insight into the model's performance.",
+      "source_reference": "5. Evaluation"
+    },
+    {
+      "from": "m1",
+      "to": "t1",
+      "type": "supports",
+      "rationale": "TinyConvNet is designed specifically for digit classification tasks.",
+      "source_reference": "Abstract"
+    }
+  ],
+  "graphs": [
+    {
+      "id": "g1",
+      "name": "Training Pipeline for TinyConvNet",
+      "description": "This graph outlines the training process of TinyConvNet, from dataset preparation to model training.",
+      "focus": "Training and dataset preparation",
+      "nodes": [
+        "ms1",
+        "ms2",
+        "ms3",
+        "ms5"
+      ],
+      "edges": [
+        {
+          "from": "ms2",
+          "to": "ms3",
+          "type": "feeds",
+          "description": "Prepared dataset is used for training."
+        },
+        {
+          "from": "ms1",
+          "to": "ms2",
+          "type": "defines",
+          "description": "Architecture is defined before dataset preparation."
+        },
+        {
+          "from": "ms3",
+          "to": "ms4",
+          "type": "trains",
+          "description": "Training process is initiated after dataset preparation."
+        }
+      ],
+      "source_reference": "4. Training Procedure",
+      "source_text": "The model is trained with cross-entropy loss and the Adam optimizer."
+    },
+    {
+      "id": "g2",
+      "name": "Evaluation Pipeline for TinyConvNet",
+      "description": "This graph outlines the evaluation process of TinyConvNet after training.",
+      "focus": "Model evaluation",
+      "nodes": [
+        "ms3",
+        "ms4",
+        "ms6",
+        "ms7"
+      ],
+      "edges": [
+        {
+          "from": "ms3",
+          "to": "ms4",
+          "type": "evaluates",
+          "description": "Trained model is evaluated on the test dataset."
+        },
+        {
+          "from": "ms4",
+          "to": "ms6",
+          "type": "reports",
+          "description": "Evaluation results are reported including accuracy."
+        },
+        {
+          "from": "ms4",
+          "to": "ms7",
+          "type": "calculates",
+          "description": "Confusion matrix is calculated from evaluation results."
+        }
+      ],
+      "source_reference": "5. Evaluation",
+      "source_text": "We report top-1 accuracy on the 10,000-image held-out test split."
+    },
+    {
+      "name": "UPS-IR Method Flow",
+      "description": "Auto-generated DAG linking questions, methods, and method steps for traceability.",
+      "focus": "auto-flow",
+      "nodes": [
+        "m1",
+        "ms1",
+        "ms2",
+        "ms3",
+        "ms4",
+        "ms5",
+        "ms6",
+        "ms7",
+        "ms8",
+        "q1",
+        "q2",
+        "q3",
+        "q4",
+        "q5"
+      ],
+      "edges": [
+        {
+          "from": "m1",
+          "to": "ms1",
+          "type": "implements",
+          "description": "TinyConvNet -> Define the architecture of TinyConvNet including convolutional blocks and fully connected layers. (implements)"
+        },
+        {
+          "from": "q2",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What is the architecture of TinyConvNet? -> TinyConvNet (addresses)"
+        },
+        {
+          "from": "m1",
+          "to": "ms2",
+          "type": "implements",
+          "description": "TinyConvNet -> Prepare the dataset by normalizing and standardizing pixel values. (implements)"
+        },
+        {
+          "from": "q3",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What dataset is used for training TinyConvNet? -> TinyConvNet (addresses)"
+        },
+        {
+          "from": "m1",
+          "to": "ms3",
+          "type": "implements",
+          "description": "TinyConvNet -> Train TinyConvNet using the specified loss and optimizer. (implements)"
+        },
+        {
+          "from": "q4",
+          "to": "m1",
+          "type": "addresses",
+          "description": "What training procedure is followed for TinyConvNet? -> TinyConvNet (addresses)"
+        },
+        {
+          "from": "ms2",
+          "to": "ms3",
+          "type": "depends_on",
+          "description": "Prepare the dataset by normalizing and standardizing pixel values. -> Train TinyConvNet using the specified loss and optimizer. (depends_on)"
+        },
+        {
+          "from": "m1",
+          "to": "ms4",
+          "type": "implements",
+          "description": "TinyConvNet -> Evaluate the trained model on the test dataset. (implements)"
+        },
+        {
+          "from": "q5",
+          "to": "m1",
+          "type": "addresses",
+          "description": "How is TinyConvNet evaluated? -> TinyConvNet (addresses)"
+        },
+        {
+          "from": "ms3",
+          "to": "ms4",
+          "type": "depends_on",
+          "description": "Train TinyConvNet using the specified loss and optimizer. -> Evaluate the trained model on the test dataset. (depends_on)"
+        },
+        {
+          "from": "m1",
+          "to": "ms5",
+          "type": "implements",
+          "description": "TinyConvNet -> Define the model architecture including convolutional blocks and fully connected layers. (implements)"
+        },
+        {
+          "from": "m1",
+          "to": "ms6",
+          "type": "implements",
+          "description": "TinyConvNet -> Report the performance metrics of the trained model. (implements)"
+        },
+        {
+          "from": "ms4",
+          "to": "ms6",
+          "type": "depends_on",
+          "description": "Evaluate the trained model on the test dataset. -> Report the performance metrics of the trained model. (depends_on)"
+        },
+        {
+          "from": "m1",
+          "to": "ms7",
+          "type": "implements",
+          "description": "TinyConvNet -> Calculate the confusion matrix based on the model's predictions. (implements)"
+        },
+        {
+          "from": "ms4",
+          "to": "ms7",
+          "type": "depends_on",
+          "description": "Evaluate the trained model on the test dataset. -> Calculate the confusion matrix based on the model's predictions. (depends_on)"
+        },
+        {
+          "from": "m1",
+          "to": "ms8",
+          "type": "implements",
+          "description": "TinyConvNet -> Define the model architecture including convolutional blocks and fully connected layers. (implements)"
+        },
+        {
+          "from": "q1",
+          "to": "m1",
+          "type": "addresses",
+          "description": "How effective is TinyConvNet for classifying grayscale digit images? -> TinyConvNet (addresses)"
+        }
+      ],
+      "source_reference": "2. Model Architecture; 3. Dataset; 4. Training Procedure; 5. Evaluation; Abstract",
+      "source_text": "Derived automatically from structured UPS-IR fields to enrich the pipeline view.",
+      "id": "g3"
+    }
+  ],
+  "sections": [
+    {
+      "id": "s1",
+      "title": "Abstract",
+      "level": 1,
+      "summary": "Introduction to TinyConvNet and its performance on digit classification.",
+      "key_points": [
+        "Compact architecture",
+        "High accuracy",
+        "Minimal reference model"
+      ],
+      "source_reference": "Abstract",
+      "source_text": "We describe TinyConvNet, a compact convolutional neural network for classifying 28x28 grayscale images."
+    },
+    {
+      "id": "s2",
+      "title": "1. Introduction",
+      "level": 1,
+      "summary": "Overview of convolutional networks for small-image classification.",
+      "key_points": [
+        "Strong default for small images",
+        "Focus on fast training"
+      ],
+      "source_reference": "1. Introduction",
+      "source_text": "Convolutional networks remain a strong default for small-image classification tasks."
+    },
+    {
+      "id": "s3",
+      "title": "2. Model Architecture",
+      "level": 1,
+      "summary": "Detailed description of the TinyConvNet architecture.",
+      "key_points": [
+        "Two convolutional blocks",
+        "Fully connected head",
+        "No batch normalization"
+      ],
+      "source_reference": "2. Model Architecture",
+      "source_text": "TinyConvNet processes a single-channel 28x28 input through the following stages."
+    },
+    {
+      "id": "s4",
+      "title": "3. Dataset",
+      "level": 1,
+      "summary": "Information about the dataset used for training.",
+      "key_points": [
+        "10-class dataset",
+        "60,000 training images",
+        "Normalization and standardization"
+      ],
+      "source_reference": "3. Dataset",
+      "source_text": "The model is trained on a standard 10-class handwritten-digit dataset of 28x28 grayscale images."
+    },
+    {
+      "id": "s5",
+      "title": "4. Training Procedure",
+      "level": 1,
+      "summary": "Description of the training process for TinyConvNet.",
+      "key_points": [
+        "Cross-entropy loss",
+        "Adam optimizer",
+        "5 epochs"
+      ],
+      "source_reference": "4. Training Procedure",
+      "source_text": "The model is trained with cross-entropy loss and the Adam optimizer."
+    },
+    {
+      "id": "s6",
+      "title": "5. Evaluation",
+      "level": 1,
+      "summary": "Evaluation metrics and results for TinyConvNet.",
+      "key_points": [
+        "Top-1 accuracy",
+        "Confusion matrix",
+        "Efficiency metrics"
+      ],
+      "source_reference": "5. Evaluation",
+      "source_text": "We report top-1 accuracy on the 10,000-image held-out test split."
+    },
+    {
+      "id": "s7",
+      "title": "6. Limitations",
+      "level": 1,
+      "summary": "Discussion of the limitations of TinyConvNet.",
+      "key_points": [
+        "Intentionally small",
+        "Single dataset evaluation"
+      ],
+      "source_reference": "6. Limitations",
+      "source_text": "TinyConvNet is intentionally small and evaluated on a single, simple dataset."
+    }
+  ],
+  "figures": [],
+  "algorithms": [],
+  "parameters": [
+    {
+      "id": "p1",
+      "name": "Learning Rate",
+      "symbol": "α",
+      "value": "1e-3",
+      "description": "The step size at each iteration while moving toward a minimum of the loss function.",
+      "constraints": "unknown",
+      "source_reference": "4. Training Procedure",
+      "source_text": "Optimizer: Adam with learning rate 1e-3."
+    },
+    {
+      "id": "p2",
+      "name": "Batch Size",
+      "symbol": "B",
+      "value": "64",
+      "description": "The number of training examples utilized in one iteration.",
+      "constraints": "unknown",
+      "source_reference": "4. Training Procedure",
+      "source_text": "Batch size: 64."
+    },
+    {
+      "id": "p3",
+      "name": "Epochs",
+      "symbol": "E",
+      "value": "5",
+      "description": "The number of complete passes through the training dataset.",
+      "constraints": "unknown",
+      "source_reference": "4. Training Procedure",
+      "source_text": "Epochs: 5."
+    }
+  ],
+  "losses": [
+    {
+      "id": "l1",
+      "name": "Cross-Entropy Loss",
+      "formula": "L(y, \\hat{y}) = -\\sum_{i=1}^{C} y_i \\log(\\hat{y}_i)",
+      "description": "Measures the performance of a classification model whose output is a probability value between 0 and 1.",
+      "related_methods": [
+        "m1"
+      ],
+      "source_reference": "4. Training Procedure",
+      "source_text": "Loss: cross-entropy loss over the 10 output logits."
+    }
+  ],
+  "training_pipeline": [
+    {
+      "id": "tp1",
+      "name": "Training TinyConvNet",
+      "description": "The process of training the TinyConvNet model on the handwritten digit dataset.",
+      "inputs": [
+        "Normalized training images",
+        "Labels"
+      ],
+      "outputs": [
+        "Trained model"
+      ],
+      "hyperparameters": [
+        "batch_size=64",
+        "epochs=5"
+      ],
+      "source_reference": "4. Training Procedure",
+      "source_text": "The model is trained with cross-entropy loss and the Adam optimizer."
+    }
+  ],
+  "optimizations": [
+    {
+      "id": "o1",
+      "name": "Adam Optimizer",
+      "objective": "Minimize cross-entropy loss during training.",
+      "optimizer": "Adam",
+      "schedule": "none",
+      "source_reference": "4. Training Procedure",
+      "source_text": "Optimizer: Adam with learning rate 1e-3."
+    }
+  ]
+}

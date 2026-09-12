@@ -1,0 +1,89 @@
+{
+  "notes": "Fill null values with paper-sourced or experimental settings before running main.py.",
+  "global": {
+    "learning_rate": {
+      "value": "1e-3",
+      "description": "Standard learning rate for Adam optimizer.",
+      "risk": "low",
+      "defined_in_paper": true
+    },
+    "batch_size": {
+      "value": "64",
+      "description": "Common batch size for training.",
+      "risk": "low",
+      "defined_in_paper": true
+    },
+    "epochs": {
+      "value": "5",
+      "description": "Number of epochs for training.",
+      "risk": "low",
+      "defined_in_paper": true
+    },
+    "seed": {
+      "value": null,
+      "description": "To ensure reproducibility of results.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "data_augmentation": {
+      "value": null,
+      "description": "Whether to apply data augmentation techniques during training.",
+      "risk": "low",
+      "defined_in_paper": false
+    }
+  },
+  "modules": {
+    "main.py": {
+      "learning_rate": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      },
+      "batch_size": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      },
+      "epochs": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      },
+      "seed": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "data_augmentation": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": false
+      }
+    },
+    "training/train.py": {
+      "learning_rate": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      },
+      "batch_size": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      },
+      "epochs": {
+        "value": null,
+        "description": "",
+        "risk": "low",
+        "defined_in_paper": true
+      }
+    }
+  }
+}

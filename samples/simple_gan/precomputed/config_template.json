@@ -1,0 +1,73 @@
+{
+  "notes": "Fill null values with paper-sourced or experimental settings before running main.py.",
+  "global": {
+    "batch_size": {
+      "value": null,
+      "description": "Common batch sizes for training GANs.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "epochs": {
+      "value": null,
+      "description": "Number of epochs for training the model.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "learning_rate": {
+      "value": null,
+      "description": "Learning rate for the Adam optimizer.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "seed": {
+      "value": null,
+      "description": "Seed for random number generation to ensure reproducibility.",
+      "risk": "low",
+      "defined_in_paper": false
+    },
+    "latent_vector_size": {
+      "value": "100",
+      "description": "Size of the latent vector input to the generator.",
+      "risk": "medium",
+      "defined_in_paper": true
+    }
+  },
+  "modules": {
+    "main.py": {
+      "config_path": {
+        "value": null,
+        "description": "Path to the configuration file for model parameters.",
+        "risk": "low",
+        "defined_in_paper": false
+      },
+      "seed": {
+        "value": null,
+        "description": "Seed for random number generation to ensure reproducibility.",
+        "risk": "low",
+        "defined_in_paper": false
+      }
+    },
+    "data_loader.py": {
+      "batch_size": {
+        "value": null,
+        "description": "Common batch sizes for training GANs.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    },
+    "training.py": {
+      "epochs": {
+        "value": null,
+        "description": "Number of epochs for training the model.",
+        "risk": "medium",
+        "defined_in_paper": false
+      },
+      "learning_rate": {
+        "value": null,
+        "description": "Learning rate for the Adam optimizer.",
+        "risk": "medium",
+        "defined_in_paper": false
+      }
+    }
+  }
+}
