@@ -1,4 +1,6 @@
-﻿# Extract & Code Generation & Debug Pipelines
+﻿# Paper2Code
+
+A multi-agent coding system that converts ML papers into executable PyTorch training code through agent planning, tool use, code generation, and end-to-end execution.
 
 A lightweight multi-agent system that:
 - **Stage 1 – Paper → UPS-IR**: turns a paper in Markdown into a rich, structured UPS-IR JSON and per-section artifacts.
@@ -13,6 +15,16 @@ Recent UPS-IR (extraction) upgrades:
 - Synthesizer automatically emits JSON shards for every top-level UPS-IR key, including the new research-awareness fields.
 
 ## Quick Start
+
+### Option A: Web UI (recommended for trying it out)
+1. `pip install -r requirements.txt`
+2. Copy `.env.example` to `.env` and fill in `OPENAI_API_KEY` (or enter the key directly in the sidebar at runtime — it's kept in-session only, never written to disk).
+3. `streamlit run app.py`, then open the local URL Streamlit prints.
+4. Paste or upload a paper as Markdown (or upload a PDF for best-effort text extraction), click **Run pipeline**, watch Stage 1/Stage 2 logs stream live, and download the generated repo as a zip.
+
+Each UI run is isolated under `runs/<timestamp>/` so it never touches the sample `UPS-IR.json` / `generated_repo/` checked into this repo.
+
+### Option B: CLI
 - **Install deps**: `pip install -r requirements.txt`
 - **Stage 1 – run UPS-IR agent pipeline**: `python main.py test2/part.md`
   - Faster (skip image captioning): `python main.py test2/part.md --skip-annotation`

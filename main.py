@@ -12,22 +12,32 @@ from langchain_core.globals import set_llm_cache
 from state import PipelineState, initial_state
 import os
 
+try:
+    from dotenv import load_dotenv
+except ImportError:  # pragma: no cover - optional dependency
+    load_dotenv = None
+
 
 def set_api_keys_inline() -> None:
-    """Inline set API credentials for local testing only.
+    """Load API credentials from the environment / a local .env file.
 
-    WARNING: Do not commit real keys in shared repos. This is per-user testing.
+    Never overwrites a key the caller already set (e.g. via the Streamlit UI
+    or a real shell export) — it only fills in gaps and reports what's live.
     """
-    # User-provided testing endpoint and key
-    OPENAI_BASE_URL = "https://api.openai.com/v1"
-    OPENAI_API_KEY = "OPENAI_API_KEY"
+    if load_dotenv is not None:
+        load_dotenv(override=False)
 
-    os.environ["OPENAI_API_KEY"] = OPENAI_API_KEY
-    os.environ["OPENAI_BASE_URL"] = OPENAI_BASE_URL
-    os.environ.setdefault("OPENAI_API_BASE", OPENAI_BASE_URL)
+    os.environ.setdefault("OPENAI_BASE_URL", "https://api.openai.com/v1")
+    os.environ.setdefault("OPENAI_API_BASE", os.environ["OPENAI_BASE_URL"])
 
     def _mask(v: str | None) -> str:
         return ("****" + v[-4:]) if v and len(v) >= 4 else "(unset)"
+
+    if not os.environ.get("OPENAI_API_KEY"):
+        raise RuntimeError(
+            "OPENAI_API_KEY is not set. Export it, put it in a .env file, "
+            "or enter it in the Streamlit sidebar."
+        )
 
     print("OPENAI_BASE_URL:", os.environ.get("OPENAI_BASE_URL", "(unset)"))
     print("OPENAI_API_KEY:", _mask(os.environ.get("OPENAI_API_KEY")))
