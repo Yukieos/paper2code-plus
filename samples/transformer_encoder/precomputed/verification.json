@@ -1,26 +1,26 @@
 {
-  "files_checked": 3,
+  "files_checked": 6,
   "passed": false,
   "findings": [
     {
       "category": "lint_violation",
-      "file": "data/loaders.py",
-      "detail": "line 5:F401 'typing.Union' imported but unused"
-    },
-    {
-      "category": "lint_violation",
-      "file": "data/loaders.py",
-      "detail": "line 87:F841 local variable 'e' is assigned to but never used"
+      "file": "main.py",
+      "detail": "line 9:F401 'utils.validate_input' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 3:F401 'os' imported but unused"
+      "detail": "line 9:F401 'utils.prepare_data' imported but unused"
     },
     {
       "category": "lint_violation",
-      "file": "main.py",
-      "detail": "line 9:F401 'matplotlib.pyplot as plt' imported but unused"
+      "file": "model.py",
+      "detail": "line 3:F401 'torch.nn.functional as F' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 1:F401 'numpy as np' imported but unused"
     }
   ]
 }

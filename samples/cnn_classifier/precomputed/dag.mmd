@@ -1,12 +1,14 @@
 flowchart TD
-  s1["s1: Setup logging for the training process."]
-  s2["s2: Load and prepare the handwritten digit dataset for training."]
-  s3["s3: Initialize the TinyConvNet model architecture."]
-  s4["s4: Train the TinyConvNet model using the prepared dataset and …"]
-  s5["s5: Evaluate the trained model on the test dataset."]
-  s6["s6: Log and report the evaluation results."]
-  s1 --> s2
+  s1["s1: Load configuration settings for the training pipeline."]
+  s2["s2: Set random seed for reproducibility."]
+  s3["s3: Load the dataset of handwritten digits and normalize the im…"]
+  s4["s4: Initialize the TinyConvNet model architecture."]
+  s5["s5: Train the TinyConvNet model using the training dataset with…"]
+  s6["s6: Evaluate the trained model on the test dataset and calculat…"]
+  s7["s7: Report the evaluation results including accuracy and confus…"]
+  s1 --> s3
   s2 --> s3
   s3 --> s4
   s4 --> s5
   s5 --> s6
+  s6 --> s7

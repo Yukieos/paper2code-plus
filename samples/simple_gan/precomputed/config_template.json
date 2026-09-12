@@ -3,25 +3,25 @@
   "global": {
     "batch_size": {
       "value": null,
-      "description": "Controls the number of samples per gradient update.",
+      "description": "Common batch sizes for training GANs.",
       "risk": "medium",
       "defined_in_paper": false
     },
     "epochs": {
       "value": null,
-      "description": "Determines how many times the model will see the entire dataset during training.",
+      "description": "Number of epochs for training the model.",
       "risk": "medium",
       "defined_in_paper": false
     },
     "learning_rate": {
       "value": null,
-      "description": "Controls the step size during optimization.",
+      "description": "Learning rate for the Adam optimizer.",
       "risk": "medium",
       "defined_in_paper": false
     },
-    "seed": {
+    "log_interval": {
       "value": null,
-      "description": "Ensures reproducibility of results.",
+      "description": "Interval for logging training progress.",
       "risk": "low",
       "defined_in_paper": false
     }
@@ -30,36 +30,42 @@
     "main.py": {
       "config_path": {
         "value": null,
-        "description": "Specifies the configuration file to load settings from.",
+        "description": "Path to the configuration file.",
         "risk": "low",
         "defined_in_paper": false
       },
       "seed": {
         "value": null,
-        "description": "Ensures reproducibility of results.",
+        "description": "Random seed for reproducibility.",
         "risk": "low",
         "defined_in_paper": false
       }
     },
-    "data_loaders/__init__.py": {
+    "data_loader.py": {
       "batch_size": {
         "value": null,
-        "description": "Controls the number of samples per gradient update.",
+        "description": "Common batch sizes for training GANs.",
         "risk": "medium",
         "defined_in_paper": false
       }
     },
-    "training/__init__.py": {
+    "training.py": {
       "epochs": {
         "value": null,
-        "description": "Determines how many times the model will see the entire dataset during training.",
+        "description": "Number of epochs for training the model.",
         "risk": "medium",
         "defined_in_paper": false
       },
       "learning_rate": {
         "value": null,
-        "description": "Controls the step size during optimization.",
+        "description": "Learning rate for the Adam optimizer.",
         "risk": "medium",
+        "defined_in_paper": false
+      },
+      "log_interval": {
+        "value": null,
+        "description": "Interval for logging training progress.",
+        "risk": "low",
         "defined_in_paper": false
       }
     }

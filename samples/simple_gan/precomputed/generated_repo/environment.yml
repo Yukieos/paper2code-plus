@@ -13,12 +13,9 @@
           - torch
   - torchvision
   - pip:
-    - csv
-    - data_loaders
+    - data_loader
     - evaluation
-    - logging
     - matplotlib
-    - metrics
     - models
     - numpy
     - pandas>=1.3.0
@@ -28,3 +25,4 @@
     - tqdm>=4.60.0
     - training
     - transformers>=4.30.0
+    - utils

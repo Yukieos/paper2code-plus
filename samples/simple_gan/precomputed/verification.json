@@ -1,56 +1,51 @@
 {
-  "files_checked": 5,
+  "files_checked": 6,
   "passed": false,
   "findings": [
     {
       "category": "lint_violation",
-      "file": "data_loaders/__init__.py",
-      "detail": "line 9:F401 'torchvision.io.read_image' imported but unused"
+      "file": "data_loader.py",
+      "detail": "line 7:F401 'numpy as np' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "evaluation.py",
+      "detail": "line 9:F401 'torchvision.utils.save_image' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 4:F401 'os' imported but unused"
+      "detail": "line 4:F401 'evaluation.Generator' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 6:F401 'torchvision' imported but unused"
+      "detail": "line 4:F401 'evaluation.load_checkpoint' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 11:F401 'pandas as pd' imported but unused"
+      "detail": "line 4:F401 'evaluation.calculate_fid' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 74:F821 undefined name 'logger'"
+      "detail": "line 4:F401 'evaluation.plot_loss_curves' imported but unused"
     },
     {
       "category": "lint_violation",
-      "file": "models/__init__.py",
-      "detail": "line 72:F821 undefined name 'latent_dim'"
+      "file": "main.py",
+      "detail": "line 5:F401 'models.train_model' imported but unused"
     },
     {
       "category": "lint_violation",
-      "file": "training/__init__.py",
-      "detail": "line 53:F821 undefined name 'device'"
+      "file": "models.py",
+      "detail": "line 8:F401 'os' imported but unused"
     },
     {
       "category": "lint_violation",
-      "file": "training/__init__.py",
-      "detail": "line 57:F821 undefined name 'device'"
-    },
-    {
-      "category": "lint_violation",
-      "file": "training/__init__.py",
-      "detail": "line 58:F821 undefined name 'device'"
-    },
-    {
-      "category": "lint_violation",
-      "file": "training/__init__.py",
-      "detail": "line 68:F821 undefined name 'device'"
+      "file": "utils.py",
+      "detail": "line 7:F401 'os' imported but unused"
     }
   ]
 }

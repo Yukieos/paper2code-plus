@@ -30,6 +30,32 @@
       "description": "For reproducibility of results.",
       "risk": "medium",
       "defined_in_paper": false
+    },
+    "checkpoint_path": {
+      "value": "./checkpoints/",
+      "description": "Directory to save model checkpoints.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "log_path": {
+      "value": "./logs/",
+      "description": "Directory to save training logs.",
+      "risk": "medium",
+      "defined_in_paper": false
+    },
+    "device": {
+      "value": "cuda" if torch.cuda.is_available() else "cpu",
+      "description": "Device to run the training on.",
+      "risk": "low",
+      "defined_in_paper": false
+    },
+    "lr_scheduler": {
+      "type": "StepLR",
+      "step_size": 5,
+      "gamma": 0.1,
+      "description": "Learning rate scheduler settings.",
+      "risk": "medium",
+      "defined_in_paper": false
     }
   },
   "modules": {

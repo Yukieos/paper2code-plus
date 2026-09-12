@@ -1,80 +1,64 @@
 import json
-import logging
-import os
-import sys
-import argparse
-import numpy as np
-import pandas as pd
 import torch
-from torch.utils.data import DataLoader
-from torchvision import datasets, transforms
-from model import TinyConvNet  # Assuming model.py contains the TinyConvNet definition
-from training import train_model  # Assuming training.py contains the training logic
-from evaluation import evaluate_model  # Assuming evaluation.py contains the evaluation logic
+import logging
+from data.loaders import load_data, normalize_images
+from evaluation.evaluate import evaluate_model
+from models.tiny_conv_net import TinyConvNet, train_model, validate_model
+from utils.report import report_results
 
-def setup_logging() -> None:
+def setup_logging():
     logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    logging.info("Starting the evaluation pipeline.")
-
-def load_config(config_path: str) -> dict:
-    with open(config_path, 'r') as f:
-        config = json.load(f)
-    return config
-
-def set_seed(seed: int) -> None:
-    torch.manual_seed(seed)
-    np.random.seed(seed)
-
-def prepare_dataset(data_path: str, batch_size: int) -> DataLoader:
-    transform = transforms.Compose([transforms.ToTensor()])
-    dataset = datasets.MNIST(root=data_path, train=False, transform=transform, download=True)
-    data_loader = DataLoader(dataset, batch_size=batch_size, shuffle=False)
-    return data_loader
-
-def initialize_model() -> TinyConvNet:
-    model = TinyConvNet()
-    return model
-
-def report_results(results: dict, output_path: str) -> None:
-    with open(output_path, 'w') as f:
-        json.dump(results, f, indent=4)
-    logging.info(f"Results saved to {output_path}")
-
-def handle_data_errors(data: Any) -> None:
-    if data.isnull().values.any():
-        logging.error("Data contains missing values.")
-        raise ValueError("Data contains missing values.")
-    logging.info("Data integrity check passed.")
+    return logging.getLogger(__name__)
 
 def main(config_path: str = "config.json", seed: int = 42) -> None:
-    setup_logging()
+    """Main entry point for the TinyConvNet application. Loads configuration, sets seed, and orchestrates the training and evaluation process."""
     
+    logger = setup_logging()
+
+    # Load configuration from config_path
     try:
-        config = load_config(config_path)
-        set_seed(seed)
+        with open(config_path, 'r') as f:
+            config = json.load(f)
+    except FileNotFoundError:
+        logger.error(f"Configuration file not found: {config_path}")
+        return
+    except json.JSONDecodeError:
+        logger.error(f"Configuration file is malformed: {config_path}")
+        return
 
-        data_loader = prepare_dataset(config['data_path'], config['global']['batch_size']['value'])
-        model = initialize_model()
+    # Set random seed for reproducibility
+    torch.manual_seed(seed)
 
-        checkpoint_path = config['checkpoint_path']
-        if os.path.exists(checkpoint_path):
-            model.load_state_dict(torch.load(checkpoint_path))
-            logging.info(f"Model loaded from {checkpoint_path}")
-        else:
-            logging.error(f"Checkpoint not found at {checkpoint_path}")
-            sys.exit(1)
+    # Load dataset and create data loaders
+    batch_size = config['global']['batch_size']['value']
+    train_loader, test_loader = load_data(batch_size)
 
-        results = evaluate_model(model, data_loader)
-        report_results(results, config['output_path'])
+    if len(train_loader) == 0 or len(test_loader) == 0:
+        logger.error("Loaded dataset is empty. Please check the data source.")
+        raise ValueError("Loaded dataset is empty.")
 
-    except Exception as e:
-        logging.error(f"An error occurred: {e}")
-        sys.exit(1)
+    # Initialize TinyConvNet model
+    try:
+        model = TinyConvNet()
+    except RuntimeError as e:
+        logger.error(f"Error initializing the model: {e}")
+        return
+
+    optimizer = torch.optim.Adam(model.parameters(), lr=config['global']['learning_rate']['value'])
+    criterion = torch.nn.CrossEntropyLoss()
+
+    # Train the model
+    num_epochs = config['global']['epochs']['value']
+    logger.info("Starting training...")
+    train_model(model, train_loader, optimizer, criterion, num_epochs, device='cpu', save_path=None, log_interval=10)
+
+    # Evaluate the model
+    logger.info("Evaluating the model...")
+    accuracy, confusion_matrix, precision, recall, f1_score = evaluate_model(model, test_loader)
+
+    # Report the results
+    logger.info("Reporting results...")
+    report_results(accuracy, confusion_matrix, precision, recall, f1_score)
 
 if __name__ == "__main__":
-    parser = argparse.ArgumentParser(description="TinyConvNet Evaluation Pipeline")
-    parser.add_argument('--config_path', type=str, default="config.json", help="Path to the configuration file.")
-    parser.add_argument('--seed', type=int, default=42, help="Random seed for reproducibility.")
-    args = parser.parse_args()
-    
-    main(args.config_path, args.seed)
+    main()

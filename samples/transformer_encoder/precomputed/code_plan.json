@@ -1,6 +1,6 @@
 {
   "repository_name": "MiniEncoder",
-  "summary": "A runnable code repository for the MiniEncoder model, a compact Transformer encoder for binary sentiment classification, with comprehensive implementation details, error handling, and evaluation metrics.",
+  "summary": "A runnable code repository for the MiniEncoder model, a compact Transformer encoder for binary sentiment classification.",
   "global_dependencies": [
     "torch",
     "transformers",
@@ -14,8 +14,8 @@
       "context": null,
       "defined_in_paper": true,
       "value": "20000",
-      "suggested_values": "20000, 30000",
-      "reason": "Size of the vocabulary for tokenization.",
+      "suggested_values": "",
+      "reason": "Size of the vocabulary for the model.",
       "default_value": 20000,
       "risk_level": "low"
     },
@@ -24,7 +24,7 @@
       "context": null,
       "defined_in_paper": true,
       "value": "128",
-      "suggested_values": "64, 128, 256",
+      "suggested_values": "",
       "reason": "Dimension of the embeddings for the model.",
       "default_value": 128,
       "risk_level": "low"
@@ -34,57 +34,57 @@
       "context": null,
       "defined_in_paper": true,
       "value": "4",
-      "suggested_values": "2, 4, 8",
+      "suggested_values": "",
       "reason": "Number of attention heads in the Transformer model.",
       "default_value": 4,
       "risk_level": "low"
     },
     {
       "name": "head_dim",
-      "context": "Derived from embedding_dim and num_heads; crucial for attention mechanism.",
-      "defined_in_paper": false,
+      "context": null,
+      "defined_in_paper": true,
       "value": "32",
-      "suggested_values": "32, 64",
-      "reason": "Dimension of each attention head, derived from embedding_dim and num_heads.",
+      "suggested_values": "",
+      "reason": "Dimension of each attention head in the model.",
       "default_value": 32,
-      "risk_level": "medium"
+      "risk_level": "low"
     },
     {
       "name": "dropout_rate",
-      "context": "Regularization technique to prevent overfitting; applied after attention and feed-forward layers.",
-      "defined_in_paper": false,
+      "context": null,
+      "defined_in_paper": true,
       "value": "0.1",
-      "suggested_values": "0.1, 0.2",
+      "suggested_values": "",
       "reason": "Dropout rate applied after attention and feed-forward layers.",
       "default_value": 0.1,
-      "risk_level": "medium"
+      "risk_level": "low"
     },
     {
       "name": "learning_rate",
-      "context": "Controls how much to change the model in response to the estimated error each time the model weights are updated.",
+      "context": null,
       "defined_in_paper": false,
-      "value": "3e-4",
-      "suggested_values": "3e-4, 1e-4",
-      "reason": "Learning rate for the optimizer during training.",
+      "value": null,
+      "suggested_values": "3e-4",
+      "reason": "Learning rate for the optimizer.",
       "default_value": 0.0003,
       "risk_level": "medium"
     },
     {
       "name": "batch_size",
-      "context": "Number of training examples utilized in one iteration.",
+      "context": null,
       "defined_in_paper": false,
-      "value": "32",
-      "suggested_values": "16, 32",
+      "value": null,
+      "suggested_values": "32",
       "reason": "Batch size for training the model.",
       "default_value": 32,
       "risk_level": "medium"
     },
     {
       "name": "epochs",
-      "context": "Number of complete passes through the training dataset.",
+      "context": null,
       "defined_in_paper": false,
-      "value": "3",
-      "suggested_values": "3, 5",
+      "value": null,
+      "suggested_values": "3",
       "reason": "Number of training epochs.",
       "default_value": 3,
       "risk_level": "medium"
@@ -96,46 +96,37 @@
       "purpose": "Entry point for running the MiniEncoder model training and evaluation.",
       "content_outline": [
         "Import necessary libraries",
-        "Define argument parser for CLI",
+        "Define main function",
+        "Parse command line arguments",
         "Load configuration from config.json",
         "Set random seed for reproducibility",
-        "Load dataset",
-        "Prepare data loaders",
+        "Prepare dataset",
         "Initialize model",
         "Train model",
-        "Evaluate model",
-        "Output results"
+        "Evaluate model"
       ],
       "key_functions": [
-        "main",
-        "load_config",
-        "set_seed",
-        "load_dataset",
-        "prepare_data_loaders",
-        "initialize_model",
-        "train_model",
-        "evaluate_model"
+        "main"
       ],
       "function_skeletons": [
         {
           "name": "main",
-          "signature": "def main(config: Dict[str, Any], seed: int) -> None:",
-          "docstring": "Main entry point for the MiniEncoder training and evaluation process.",
+          "signature": "def main(config_path: str, seed: int) -> None:",
+          "docstring": "Main entry point for the MiniEncoder training and evaluation process. \n\nArgs:\n    config_path (str): Path to the configuration file.\n    seed (int): Random seed for reproducibility.",
           "core_steps": [
-            "Parse command line arguments for config and seed",
-            "Load configuration from the specified JSON file",
-            "Set random seed for reproducibility",
-            "Load and prepare the dataset",
-            "Initialize the MiniEncoder model",
-            "Train the model on the training dataset",
-            "Evaluate the model on the test dataset",
-            "Output evaluation metrics"
+            "Parse command line arguments for config and seed.",
+            "Load configuration from the specified JSON file.",
+            "Set the random seed for reproducibility.",
+            "Prepare the dataset using the specified parameters.",
+            "Initialize the MiniEncoder model with the configuration settings.",
+            "Train the model on the prepared dataset.",
+            "Evaluate the model and print the results."
           ],
           "key_variables": [
             {
               "name": "config",
-              "type": "Dict[str, Any]",
-              "purpose": "Configuration settings for the model and training."
+              "type": "dict",
+              "purpose": "Configuration settings loaded from config.json."
             },
             {
               "name": "seed",
@@ -145,277 +136,41 @@
           ],
           "dependencies": [],
           "source_alignment": [
-            "Abstract",
-            "Section 4"
+            "Abstract"
           ]
-        },
-        {
-          "name": "load_config",
-          "signature": "def load_config(config_path: str) -> Dict[str, Any]:",
-          "docstring": "Load configuration settings from a JSON file.",
-          "core_steps": [
-            "Open the JSON file at config_path",
-            "Parse the JSON content",
-            "Return the configuration as a dictionary"
-          ],
-          "key_variables": [
-            {
-              "name": "config_path",
-              "type": "str",
-              "purpose": "Path to the configuration JSON file."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 1"
-          ]
-        },
-        {
-          "name": "set_seed",
-          "signature": "def set_seed(seed: int) -> None:",
-          "docstring": "Set the random seed for reproducibility.",
-          "core_steps": [
-            "Set seed for numpy",
-            "Set seed for torch"
-          ],
-          "key_variables": [
-            {
-              "name": "seed",
-              "type": "int",
-              "purpose": "Random seed for initializing random number generators."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 1"
-          ]
-        },
-        {
-          "name": "load_dataset",
-          "signature": "def load_dataset(data_path: str) -> Tuple[List[str], List[int]]:",
-          "docstring": "Load the dataset from the specified path and return texts and labels.",
-          "core_steps": [
-            "Read the dataset from data_path",
-            "Tokenize the text data",
-            "Return tokenized texts and corresponding labels"
-          ],
-          "key_variables": [
-            {
-              "name": "data_path",
-              "type": "str",
-              "purpose": "Path to the dataset file."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 3"
-          ]
-        },
-        {
-          "name": "prepare_data_loaders",
-          "signature": "def prepare_data_loaders(texts: List[str], labels: List[int], batch_size: int) -> Tuple[DataLoader, DataLoader]:",
-          "docstring": "Prepare data loaders for training and evaluation.",
-          "core_steps": [
-            "Split the dataset into training and validation sets",
-            "Create DataLoader instances for both sets",
-            "Return the training and validation DataLoaders"
-          ],
-          "key_variables": [
-            {
-              "name": "texts",
-              "type": "List[str]",
-              "purpose": "List of tokenized text sequences."
-            },
-            {
-              "name": "labels",
-              "type": "List[int]",
-              "purpose": "List of corresponding labels for the texts."
-            },
-            {
-              "name": "batch_size",
-              "type": "int",
-              "purpose": "Batch size for the DataLoader."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 3"
-          ]
-        },
-        {
-          "name": "initialize_model",
-          "signature": "def initialize_model(vocab_size: int, embedding_dim: int, num_heads: int, head_dim: int, dropout_rate: float) -> MiniEncoder:",
-          "docstring": "Initialize the MiniEncoder model with the specified parameters.",
-          "core_steps": [
-            "Create an instance of the MiniEncoder class",
-            "Return the initialized model"
-          ],
-          "key_variables": [
-            {
-              "name": "vocab_size",
-              "type": "int",
-              "purpose": "Size of the vocabulary."
-            },
-            {
-              "name": "embedding_dim",
-              "type": "int",
-              "purpose": "Dimension of the embeddings."
-            },
-            {
-              "name": "num_heads",
-              "type": "int",
-              "purpose": "Number of attention heads."
-            },
-            {
-              "name": "head_dim",
-              "type": "int",
-              "purpose": "Dimension of each attention head."
-            },
-            {
-              "name": "dropout_rate",
-              "type": "float",
-              "purpose": "Dropout rate for the model."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 2"
-          ]
-        },
-        {
-          "name": "train_model",
-          "signature": "def train_model(model: MiniEncoder, train_loader: DataLoader, learning_rate: float, epochs: int) -> MiniEncoder:",
-          "docstring": "Train the MiniEncoder model using the provided training data.",
-          "core_steps": [
-            "Set model to training mode",
-            "Iterate over epochs",
-            "For each epoch, iterate over the training data",
-            "Compute loss and update model parameters",
-            "Return the trained model"
-          ],
-          "key_variables": [
-            {
-              "name": "model",
-              "type": "MiniEncoder",
-              "purpose": "The MiniEncoder model to be trained."
-            },
-            {
-              "name": "train_loader",
-              "type": "DataLoader",
-              "purpose": "DataLoader for the training dataset."
-            },
-            {
-              "name": "learning_rate",
-              "type": "float",
-              "purpose": "Learning rate for the optimizer."
-            },
-            {
-              "name": "epochs",
-              "type": "int",
-              "purpose": "Number of training epochs."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 4"
-          ]
-        },
-        {
-          "name": "evaluate_model",
-          "signature": "def evaluate_model(model: MiniEncoder, test_loader: DataLoader) -> Dict[str, float]:",
-          "docstring": "Evaluate the trained MiniEncoder model on the test dataset.",
-          "core_steps": [
-            "Set model to evaluation mode",
-            "Iterate over the test data",
-            "Compute evaluation metrics (accuracy, F1 score)",
-            "Return the evaluation metrics as a dictionary"
-          ],
-          "key_variables": [
-            {
-              "name": "model",
-              "type": "MiniEncoder",
-              "purpose": "The trained MiniEncoder model."
-            },
-            {
-              "name": "test_loader",
-              "type": "DataLoader",
-              "purpose": "DataLoader for the test dataset."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 5"
-          ]
-        },
-        {
-          "name": "log_error",
-          "signature": "def log_error(message: str) -> None:",
-          "docstring": "Log error messages to a log file for debugging purposes.",
-          "core_steps": [
-            "Open the log file in append mode",
-            "Write the error message with a timestamp"
-          ],
-          "key_variables": [
-            {
-              "name": "message",
-              "type": "str",
-              "purpose": "The error message to log."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": []
-        },
-        {
-          "name": "handle_empty_dataset",
-          "signature": "def handle_empty_dataset(data: List[str]) -> None:",
-          "docstring": "Handle cases where the dataset is empty, raising an appropriate error.",
-          "core_steps": [
-            "Check if the dataset is empty",
-            "Raise a ValueError if empty"
-          ],
-          "key_variables": [
-            {
-              "name": "data",
-              "type": "List[str]",
-              "purpose": "The dataset to check for emptiness."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": []
         }
       ],
       "dependencies": [],
       "requires_parameters": [
         {
-          "name": "config",
-          "context": "Configuration settings for the model and training.",
+          "name": "config_path",
+          "context": null,
           "defined_in_paper": false,
           "value": null,
-          "suggested_values": "Path to config.json",
-          "reason": "Configuration file path for model parameters.",
+          "suggested_values": "",
+          "reason": "Path to the configuration file.",
           "default_value": "config.json",
-          "risk_level": "low"
+          "risk_level": "medium"
         },
         {
           "name": "seed",
-          "context": "Random seed for reproducibility.",
+          "context": null,
           "defined_in_paper": false,
           "value": null,
-          "suggested_values": "Integer seed value",
-          "reason": "Seed for random number generators.",
+          "suggested_values": "",
+          "reason": "Random seed for reproducibility.",
           "default_value": 42,
           "risk_level": "medium"
         }
       ],
       "acceptance_criteria": [
-        "The script runs without errors when provided with valid config and seed arguments.",
-        "The model trains and evaluates correctly, producing accuracy and F1 score metrics within expected ranges based on benchmark results.",
-        "Error handling is implemented, and appropriate error messages are logged for issues such as empty datasets or invalid configurations."
+        "The script runs without errors when provided with valid arguments.",
+        "The model trains and evaluates correctly based on the provided configuration."
       ]
     },
     {
       "path": "config.json",
-      "purpose": "Configuration file for the MiniEncoder model parameters.",
+      "purpose": "Configuration file for the MiniEncoder model settings.",
       "content_outline": [
         "vocab_size",
         "embedding_dim",
@@ -431,57 +186,49 @@
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The JSON file is valid and can be loaded without errors.",
-        "Contains all necessary parameters for model configuration."
+        "The configuration file is valid JSON.",
+        "All required parameters are present and have sensible default values."
       ]
     },
     {
-      "path": "data/loaders.py",
-      "purpose": "Data loading and preprocessing utilities for the MiniEncoder model.",
+      "path": "data_loader.py",
+      "purpose": "Data loading and preprocessing for the sentiment classification dataset.",
       "content_outline": [
-        "Define functions for loading and preprocessing data",
-        "Implement tokenization and mapping to ids"
+        "Import necessary libraries",
+        "Define Dataset class",
+        "Implement __init__ method",
+        "Implement __len__ method",
+        "Implement __getitem__ method"
       ],
       "key_functions": [
-        "load_dataset",
-        "tokenize_data"
+        "load_data"
       ],
       "function_skeletons": [
         {
-          "name": "load_dataset",
-          "signature": "def load_dataset(data_path: str) -> Tuple[List[str], List[int]]:",
-          "docstring": "Load the dataset from the specified path and return texts and labels.",
+          "name": "load_data",
+          "signature": "def load_data(file_path: str) -> Tuple[List[str], List[int]]:",
+          "docstring": "Load and preprocess the sentiment classification dataset.\n\nArgs:\n    file_path (str): Path to the dataset file.\n\nReturns:\n    Tuple[List[str], List[int]]: A tuple containing the list of texts and their corresponding labels.",
           "core_steps": [
-            "Read the dataset from data_path",
-            "Tokenize the text data",
-            "Return tokenized texts and corresponding labels"
+            "Read the dataset file from the specified path.",
+            "Tokenize the text data into sentences.",
+            "Map the text data to token ids based on the vocabulary.",
+            "Return the tokenized texts and their labels."
           ],
           "key_variables": [
             {
-              "name": "data_path",
+              "name": "file_path",
               "type": "str",
               "purpose": "Path to the dataset file."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "Section 3"
-          ]
-        },
-        {
-          "name": "tokenize_data",
-          "signature": "def tokenize_data(raw_texts: List[str]) -> List[str]:",
-          "docstring": "Tokenize raw text data into a list of tokenized strings.",
-          "core_steps": [
-            "Lowercase the text",
-            "Split the text into tokens based on whitespace and punctuation",
-            "Return the list of tokenized strings"
-          ],
-          "key_variables": [
+            },
             {
-              "name": "raw_texts",
+              "name": "texts",
               "type": "List[str]",
-              "purpose": "List of raw text strings to be tokenized."
+              "purpose": "List of text samples from the dataset."
+            },
+            {
+              "name": "labels",
+              "type": "List[int]",
+              "purpose": "List of corresponding labels for the text samples."
             }
           ],
           "dependencies": [],
@@ -491,31 +238,43 @@
         }
       ],
       "dependencies": [],
-      "requires_parameters": [],
+      "requires_parameters": [
+        {
+          "name": "file_path",
+          "context": null,
+          "defined_in_paper": false,
+          "value": null,
+          "suggested_values": "",
+          "reason": "Path to the dataset file.",
+          "default_value": "data/dataset.csv",
+          "risk_level": "medium"
+        }
+      ],
       "acceptance_criteria": [
-        "The data loading functions correctly load and preprocess the dataset without errors."
+        "The function loads the dataset correctly and returns the expected format.",
+        "The dataset is tokenized and mapped to ids as specified."
       ]
     },
     {
-      "path": "models/mini_encoder.py",
+      "path": "model.py",
       "purpose": "Implementation of the MiniEncoder model architecture.",
       "content_outline": [
-        "Define the MiniEncoder class",
-        "Implement the forward pass",
-        "Integrate components like embedding, attention, and pooling"
+        "Import necessary libraries",
+        "Define MiniEncoder class",
+        "Implement __init__ method",
+        "Implement forward method"
       ],
       "key_functions": [
         "MiniEncoder"
       ],
       "function_skeletons": [
         {
-          "name": "MiniEncoder",
-          "signature": "class MiniEncoder(nn.Module):",
-          "docstring": "A compact Transformer encoder model for binary sentiment classification.",
+          "name": "__init__",
+          "signature": "def __init__(self, vocab_size: int, embedding_dim: int, num_heads: int, head_dim: int, dropout_rate: float) -> None:",
+          "docstring": "Initialize the MiniEncoder model with the specified parameters.\n\nArgs:\n    vocab_size (int): Size of the vocabulary.\n    embedding_dim (int): Dimension of the embeddings.\n    num_heads (int): Number of attention heads.\n    head_dim (int): Dimension of each attention head.\n    dropout_rate (float): Dropout rate for the model.",
           "core_steps": [
-            "Initialize embedding, attention layers, and pooling",
-            "Define the forward pass to process input token ids",
-            "Return the output logits for classification"
+            "Set the vocabulary size, embedding dimension, number of heads, head dimension, and dropout rate as instance variables.",
+            "Initialize the embedding layer, positional encoding, and Transformer encoder layers."
           ],
           "key_variables": [
             {
@@ -548,47 +307,70 @@
           "source_alignment": [
             "Section 2"
           ]
+        },
+        {
+          "name": "forward",
+          "signature": "def forward(self, x: torch.Tensor) -> torch.Tensor:",
+          "docstring": "Forward pass through the MiniEncoder model.\n\nArgs:\n    x (torch.Tensor): Input tensor of token ids.\n\nReturns:\n    torch.Tensor: Output logits for classification.",
+          "core_steps": [
+            "Pass the input tensor through the embedding layer.",
+            "Add positional encodings to the embeddings.",
+            "Apply the Transformer encoder layers to the embeddings.",
+            "Pool the output and pass it through the classification head."
+          ],
+          "key_variables": [
+            {
+              "name": "x",
+              "type": "torch.Tensor",
+              "purpose": "Input tensor of token ids."
+            },
+            {
+              "name": "logits",
+              "type": "torch.Tensor",
+              "purpose": "Output logits for classification."
+            }
+          ],
+          "dependencies": [],
+          "source_alignment": [
+            "Section 2"
+          ]
         }
       ],
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The MiniEncoder class can be instantiated without errors.",
-        "The forward pass produces output logits for given input token ids."
+        "The model initializes without errors with valid parameters.",
+        "The forward pass produces output of the correct shape."
       ]
     },
     {
-      "path": "training/train.py",
-      "purpose": "Training script for the MiniEncoder model.",
+      "path": "training.py",
+      "purpose": "Training loop for the MiniEncoder model.",
       "content_outline": [
         "Import necessary libraries",
-        "Load configuration",
-        "Load dataset",
-        "Prepare data loaders",
-        "Initialize model",
-        "Train model",
-        "Save trained model"
+        "Define train function",
+        "Implement training loop"
       ],
       "key_functions": [
-        "train_model"
+        "train"
       ],
       "function_skeletons": [
         {
-          "name": "train_model",
-          "signature": "def train_model(model: MiniEncoder, train_loader: DataLoader, learning_rate: float, epochs: int) -> MiniEncoder:",
-          "docstring": "Train the MiniEncoder model using the provided training data.",
+          "name": "train",
+          "signature": "def train(model: nn.Module, train_loader: DataLoader, optimizer: Optimizer, criterion: nn.Module, epochs: int) -> None:",
+          "docstring": "Train the MiniEncoder model on the training dataset.\n\nArgs:\n    model (nn.Module): The MiniEncoder model to train.\n    train_loader (DataLoader): DataLoader for the training dataset.\n    optimizer (Optimizer): Optimizer for updating model weights.\n    criterion (nn.Module): Loss function for training.\n    epochs (int): Number of training epochs.",
           "core_steps": [
-            "Set model to training mode",
-            "Iterate over epochs",
-            "For each epoch, iterate over the training data",
-            "Compute loss and update model parameters",
-            "Return the trained model"
+            "Set the model to training mode.",
+            "Iterate over the number of epochs.",
+            "For each epoch, iterate over the training data.",
+            "Perform forward pass, compute loss, and backpropagate.",
+            "Update model weights using the optimizer."
           ],
           "key_variables": [
             {
               "name": "model",
-              "type": "MiniEncoder",
-              "purpose": "The MiniEncoder model to be trained."
+              "type": "nn.Module",
+              "purpose": "The MiniEncoder model to train."
             },
             {
               "name": "train_loader",
@@ -596,9 +378,14 @@
               "purpose": "DataLoader for the training dataset."
             },
             {
-              "name": "learning_rate",
-              "type": "float",
-              "purpose": "Learning rate for the optimizer."
+              "name": "optimizer",
+              "type": "Optimizer",
+              "purpose": "Optimizer for updating model weights."
+            },
+            {
+              "name": "criterion",
+              "type": "nn.Module",
+              "purpose": "Loss function for training."
             },
             {
               "name": "epochs",
@@ -615,44 +402,46 @@
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The training script runs without errors and produces a trained model."
+        "The training function runs without errors and updates model weights.",
+        "The model achieves a loss reduction over epochs."
       ]
     },
     {
-      "path": "evaluation/evaluate.py",
-      "purpose": "Evaluation script for the MiniEncoder model.",
+      "path": "evaluation.py",
+      "purpose": "Evaluation of the trained MiniEncoder model.",
       "content_outline": [
         "Import necessary libraries",
-        "Load configuration",
-        "Load test dataset",
-        "Load trained model",
-        "Evaluate model",
-        "Output evaluation metrics"
+        "Define evaluate function",
+        "Implement evaluation metrics"
       ],
       "key_functions": [
-        "evaluate_model"
+        "evaluate"
       ],
       "function_skeletons": [
         {
-          "name": "evaluate_model",
-          "signature": "def evaluate_model(model: MiniEncoder, test_loader: DataLoader) -> Dict[str, float]:",
-          "docstring": "Evaluate the trained MiniEncoder model on the test dataset.",
+          "name": "evaluate",
+          "signature": "def evaluate(model: nn.Module, test_loader: DataLoader) -> Dict[str, float]:",
+          "docstring": "Evaluate the MiniEncoder model on the test dataset.\n\nArgs:\n    model (nn.Module): The trained MiniEncoder model.\n    test_loader (DataLoader): DataLoader for the test dataset.\n\nReturns:\n    Dict[str, float]: A dictionary containing evaluation metrics such as accuracy and F1 score.",
           "core_steps": [
-            "Set model to evaluation mode",
-            "Iterate over the test data",
-            "Compute evaluation metrics (accuracy, F1 score)",
-            "Return the evaluation metrics as a dictionary"
+            "Set the model to evaluation mode.",
+            "Iterate over the test data and collect predictions.",
+            "Compute evaluation metrics such as accuracy and F1 score."
           ],
           "key_variables": [
             {
               "name": "model",
-              "type": "MiniEncoder",
+              "type": "nn.Module",
               "purpose": "The trained MiniEncoder model."
             },
             {
               "name": "test_loader",
               "type": "DataLoader",
               "purpose": "DataLoader for the test dataset."
+            },
+            {
+              "name": "metrics",
+              "type": "Dict[str, float]",
+              "purpose": "Dictionary containing evaluation metrics."
             }
           ],
           "dependencies": [],
@@ -664,42 +453,46 @@
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The evaluation script runs without errors and produces accuracy and F1 score metrics."
+        "The evaluation function runs without errors and returns metrics in the expected format."
+      ]
+    },
+    {
+      "path": "utils.py",
+      "purpose": "Utility functions for the MiniEncoder project.",
+      "content_outline": [
+        "Import necessary libraries",
+        "Define utility functions"
+      ],
+      "key_functions": [],
+      "function_skeletons": [],
+      "dependencies": [],
+      "requires_parameters": [],
+      "acceptance_criteria": [
+        "Utility functions are defined and can be imported without errors."
       ]
     }
   ],
   "tests": [
     {
-      "path": "tests/test_model.py",
-      "purpose": "Unit tests for the MiniEncoder model and its components.",
+      "path": "test_model.py",
+      "purpose": "Unit tests for the MiniEncoder model implementation.",
       "test_functions": [
-        "test_mini_encoder_initialization",
-        "test_forward_pass",
-        "test_data_loading",
-        "test_training",
-        "test_evaluation"
+        "test_model_initialization",
+        "test_forward_pass"
       ]
     },
     {
-      "path": "tests/test_data_loaders.py",
-      "purpose": "Unit tests for data loading and preprocessing functions.",
+      "path": "test_training.py",
+      "purpose": "Unit tests for the training loop.",
       "test_functions": [
-        "test_load_dataset",
-        "test_tokenize_data"
+        "test_training_loop"
       ]
     },
     {
-      "path": "tests/test_training.py",
-      "purpose": "Integration tests for the training process of the MiniEncoder model.",
+      "path": "test_evaluation.py",
+      "purpose": "Unit tests for the evaluation metrics.",
       "test_functions": [
-        "test_training_process"
-      ]
-    },
-    {
-      "path": "tests/test_evaluation.py",
-      "purpose": "Integration tests for the evaluation process of the MiniEncoder model.",
-      "test_functions": [
-        "test_evaluation_process"
+        "test_evaluation_metrics"
       ]
     }
   ],

@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import argparse
+import ast
 import json
 import logging
+import os
 import re
 import subprocess
 import sys
@@ -786,6 +788,29 @@ class ParameterPlaceholderAgent:
         return state
 
 
+def _coerce_numeric(value: Any) -> Any:
+    """PlannerAgent's LLM output writes numeric parameter values as strings
+    ("64", "1e-3") indistinguishably from genuinely-string values ("cuda",
+    "Adam"). Left as strings, downstream generated code that does numeric
+    comparisons/arithmetic on config values (batch_size <= 0, lr * decay,
+    ...) hits a real TypeError at runtime. Coerce anything that parses
+    cleanly as int/float; leave everything else untouched.
+    """
+    if not isinstance(value, str):
+        return value
+    stripped = value.strip()
+    if not stripped:
+        return value
+    try:
+        return int(stripped)
+    except ValueError:
+        pass
+    try:
+        return float(stripped)
+    except ValueError:
+        return value
+
+
 class ConfigGeneratorAgent:
     def __init__(self, output_path: Path | None = None):
         self.output_path = (output_path or (Path("output") / "config_template.json")).resolve()
@@ -803,7 +828,7 @@ class ConfigGeneratorAgent:
 
         def _insert(context: str, name: str, value: Any, description: str, risk: str, defined: bool) -> None:
             entry = {
-                "value": value,
+                "value": _coerce_numeric(value),
                 "description": description,
                 "risk": risk,
                 "defined_in_paper": defined,
@@ -1252,9 +1277,19 @@ class SyntaxCheckerAgent:
 DATASET_PROMPT = (
     "You are an expert data engineer. Write the file `{file_path}` for dataset loading and preprocessing.\n\n"
     "REQUIREMENTS:\n"
+    "- If the UPS-IR dataset is a well-known public benchmark with a standard "
+    "auto-downloading loader (e.g. MNIST/CIFAR-10/CIFAR-100/ImageNet via "
+    "`torchvision.datasets`, or a standard split via the `datasets` library), "
+    "use that loader directly (e.g. `torchvision.datasets.MNIST(root=..., "
+    "download=True)`). Do NOT assume a local CSV/JSON file exists on disk "
+    "unless the UPS-IR explicitly names a custom on-disk file/path — a "
+    "generic `CustomDataset('some/path.csv')` for a dataset that actually "
+    "ships its own downloader is a hard runtime failure, not a reasonable "
+    "default.\n"
+    "- Only implement custom CSV/JSON/HDF5/image-folder loading logic when "
+    "the UPS-IR describes a dataset that genuinely needs it.\n"
     "- Implement complete data loaders with proper error handling\n"
     "- Include data validation and schema checks\n"
-    "- Handle different data formats (CSV, JSON, HDF5, images, etc.)\n"
     "- Implement preprocessing pipelines (normalization, augmentation, etc.)\n"
     "- Add proper logging and progress tracking\n"
     "- Use type hints consistently\n"
@@ -1325,7 +1360,8 @@ class DatasetAgent:
         prompt = ChatPromptTemplate.from_template(DATASET_PROMPT)
         self.chain = prompt | self.llm | StrOutputParser()
 
-    def _is_dataset_file(self, file_spec: Dict[str, Any]) -> bool:
+    @staticmethod
+    def _is_dataset_file(file_spec: Dict[str, Any]) -> bool:
         """Check if a file is related to dataset handling."""
         path = file_spec.get("path", "").lower()
         purpose = file_spec.get("purpose", "").lower()
@@ -1341,8 +1377,15 @@ class DatasetAgent:
         ups_ir = state.get("ups_ir", {})
         config_template = state.get("config_template", {})
 
-        # Filter files relevant to datasets
-        file_specs = [f for f in plan.get("files", []) if self._is_dataset_file(f)]
+        # Filter files relevant to datasets. Prefer the once-computed,
+        # mutually-exclusive assignment (see assign_file_owners) so this
+        # never double-writes a file another agent also claims; fall back to
+        # the raw heuristic only if this agent is run standalone.
+        file_owners = state.get("file_owners")
+        if file_owners is not None:
+            file_specs = [f for f in plan.get("files", []) if file_owners.get(f.get("path")) == "dataset"]
+        else:
+            file_specs = [f for f in plan.get("files", []) if self._is_dataset_file(f)]
 
         if not file_specs:
             logger.info("DatasetAgent: No dataset files to generate")
@@ -1395,7 +1438,8 @@ class ExecutionAgent:
         algo_prompt = ChatPromptTemplate.from_template(EXECUTION_PROMPT_ALGORITHM)
         self.algo_chain = algo_prompt | self.llm | StrOutputParser()
 
-    def _is_execution_file(self, file_spec: Dict[str, Any], paper_type: str) -> bool:
+    @staticmethod
+    def _is_execution_file(file_spec: Dict[str, Any], paper_type: str) -> bool:
         """Check if a file contains core execution logic."""
         path = file_spec.get("path", "").lower()
         purpose = file_spec.get("purpose", "").lower()
@@ -1405,7 +1449,13 @@ class ExecutionAgent:
         elif paper_type == PaperType.ALGORITHM.value:
             keywords = ["algorithm", "solver", "compute"]
         else:
-            keywords = ["experiment", "run", "execute"]
+            # "analysis" (or any other classification) still very often
+            # needs a model defined and trained (e.g. this exact paper: an
+            # encoder architecture classified as "analysis", whose model.py
+            # and train.py matched NONE of the original narrower keywords
+            # here and were silently never generated by anyone at all).
+            keywords = ["experiment", "run", "execute", "model", "train",
+                        "network", "architecture", "encoder", "decoder"]
 
         return any(kw in path or kw in purpose for kw in keywords)
 
@@ -1420,9 +1470,13 @@ class ExecutionAgent:
         config_template = state.get("config_template", {})
         flow_reasoning = json.dumps(state.get("flow_reasoning", {}), ensure_ascii=False, indent=2)
 
-        # Filter execution-related files
-        file_specs = [f for f in plan.get("files", [])
-                      if self._is_execution_file(f, paper_type)]
+        # Filter execution-related files (see DatasetAgent.run for why this
+        # prefers the precomputed, mutually-exclusive file_owners map)
+        file_owners = state.get("file_owners")
+        if file_owners is not None:
+            file_specs = [f for f in plan.get("files", []) if file_owners.get(f.get("path")) == "execution"]
+        else:
+            file_specs = [f for f in plan.get("files", []) if self._is_execution_file(f, paper_type)]
 
         if not file_specs:
             logger.info("ExecutionAgent: No execution files to generate")
@@ -1480,7 +1534,8 @@ class EvaluationAgent:
         prompt = ChatPromptTemplate.from_template(EVALUATION_PROMPT)
         self.chain = prompt | self.llm | StrOutputParser()
 
-    def _is_evaluation_file(self, file_spec: Dict[str, Any]) -> bool:
+    @staticmethod
+    def _is_evaluation_file(file_spec: Dict[str, Any]) -> bool:
         """Check if a file is related to evaluation/metrics."""
         path = file_spec.get("path", "").lower()
         purpose = file_spec.get("purpose", "").lower()
@@ -1496,8 +1551,13 @@ class EvaluationAgent:
         ups_ir = state.get("ups_ir", {})
         config_template = state.get("config_template", {})
 
-        # Filter evaluation-related files
-        file_specs = [f for f in plan.get("files", []) if self._is_evaluation_file(f)]
+        # Filter evaluation-related files (see DatasetAgent.run for why this
+        # prefers the precomputed, mutually-exclusive file_owners map)
+        file_owners = state.get("file_owners")
+        if file_owners is not None:
+            file_specs = [f for f in plan.get("files", []) if file_owners.get(f.get("path")) == "evaluation"]
+        else:
+            file_specs = [f for f in plan.get("files", []) if self._is_evaluation_file(f)]
 
         if not file_specs:
             logger.info("EvaluationAgent: No evaluation files to generate")
@@ -1533,6 +1593,231 @@ class EvaluationAgent:
 
         state["evaluation_files"] = generated
         logger.info(f"EvaluationAgent generated {len(generated)} evaluation files")
+        return state
+
+
+def find_entry_point_path(files: List[Dict[str, Any]]) -> Optional[str]:
+    """Which planned file is the top-level orchestration entry point.
+
+    Prefers the plan's own words ("entry point") over guessing by filename,
+    but falls back to the conventional main.py/run.py if nothing says so
+    explicitly.
+    """
+    for f in files:
+        purpose = (f.get("purpose") or "").lower()
+        if "entry point" in purpose or "entrypoint" in purpose:
+            return f.get("path")
+    for f in files:
+        if f.get("path") in ("main.py", "run.py"):
+            return f.get("path")
+    return None
+
+
+def assign_file_owners(files: List[Dict[str, Any]], paper_type: str, entry_point_path: Optional[str]) -> Dict[str, str]:
+    """Decide exactly ONE of {dataset, execution, evaluation} per file.
+
+    DatasetAgent/ExecutionAgent/EvaluationAgent used to each independently
+    re-run their own keyword heuristic over every file, with no shared
+    bookkeeping — any file matching more than one agent's keywords (e.g. a
+    "main.py" whose purpose mentions both "training" and "evaluation") got
+    written by every matching agent, and whichever ran last silently won.
+    That's exactly how a real ExecutionAgent-written training entry point
+    ended up replaced by an EvaluationAgent-written eval-only one. This
+    computes the assignment once, so each file has exactly one writer.
+
+    The entry point itself is deliberately excluded here — it's handled by
+    EntryPointAgent instead, which writes it last using the *real* generated
+    signatures rather than a guess made before those files even existed.
+    """
+    owners: Dict[str, str] = {}
+    for f in files:
+        path = f.get("path")
+        if not path or path == entry_point_path:
+            continue
+        if DatasetAgent._is_dataset_file(f):
+            owners[path] = "dataset"
+        elif EvaluationAgent._is_evaluation_file(f):
+            owners[path] = "evaluation"
+        elif ExecutionAgent._is_execution_file(f, paper_type):
+            owners[path] = "execution"
+        elif path.endswith(".py"):
+            # No keyword matched at all — this used to mean the file was
+            # simply never generated by anyone, silently (exactly how a
+            # model/training file for a paper classified as anything other
+            # than "ml_training" could vanish entirely). A non-.py file
+            # (config.json, etc.) legitimately has no owner here; a .py file
+            # always needs one, so default it to the general-purpose agent.
+            owners[path] = "execution"
+    return owners
+
+
+ENTRY_POINT_PROMPT = (
+    "You are writing the top-level entry point `{file_path}` that orchestrates an "
+    "already-generated PyTorch repository. Below are the ACTUAL functions/classes that "
+    "exist in the other generated files, with their real parameter lists — this is ground "
+    "truth, not a plan; you MUST import and call these exactly as given.\n\n"
+    "Actual modules and their real top-level definitions:\n{module_signatures}\n\n"
+    "File plan for this entry point:\n{file_plan}\n\n"
+    "Configuration template:\n{config_template}\n\n"
+    "UPS-IR context:\n{ups_ir_summary}\n\n"
+    "REQUIREMENTS:\n"
+    "- Import only names that literally appear above, from the exact module path shown. "
+    "Do not invent a function, class, or argument that isn't listed.\n"
+    "- Call each function/method with exactly the parameters listed for it — do not add, "
+    "drop, reorder, or rename arguments.\n"
+    "- Orchestrate the full pipeline (load data, build the model, train it, then evaluate "
+    "it) using only what's actually available above; if a stage has no available function, "
+    "skip that stage rather than inventing one or leaving a bare placeholder.\n"
+    "- End with `if __name__ == \"__main__\":` that actually calls your main function — "
+    "never leave that block containing only comments.\n"
+    "- The configuration template above is ALWAYS nested as "
+    "`config['global'][param_name]['value']` (or under a per-file key for module-specific "
+    "params) — never validate or access a config parameter as a flat top-level key "
+    "(e.g. `'epochs' in config`); that will raise on every real run because the key is "
+    "actually at `config['global']['epochs']`.\n\n"
+    "Generate production-ready code. Return ONLY the complete file content without markdown fences."
+)
+
+
+class EntryPointAgent:
+    """Writes the top-level entry point LAST, after every other file already
+    exists, using their real (AST-introspected) signatures — not a guess
+    made from the file plan before any of that code was written. This is
+    the single biggest lever against generated repos that don't actually
+    run: a training entry point that silently got overwritten by another
+    agent, or one that imports a function under a name/signature that
+    doesn't match what was actually generated elsewhere.
+    """
+
+    def __init__(self, config: "CodeWriterConfig"):
+        self.config = config
+        self.llm = ChatOpenAI(model=config.model_name, temperature=config.temperature)
+        prompt = ChatPromptTemplate.from_template(ENTRY_POINT_PROMPT)
+        self.chain = prompt | self.llm | StrOutputParser()
+
+    @staticmethod
+    def _introspect(output_dir: Path, generated_files: List[str]) -> tuple[str, Dict[str, str]]:
+        """Returns (rendered signatures text, {top_level_name: real_module})
+        for every already-generated file, so the entry point can be both
+        prompted with and mechanically checked against ground truth."""
+        lines = []
+        symbol_index: Dict[str, str] = {}
+        for file_path in sorted(set(generated_files)):
+            path = Path(file_path)
+            if not path.exists() or path.suffix != ".py":
+                continue
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            except SyntaxError:
+                continue
+
+            try:
+                module = str(path.relative_to(output_dir).with_suffix("")).replace(os.sep, ".")
+            except ValueError:
+                module = path.stem
+
+            defs = []
+            for node in tree.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    args = [a.arg for a in node.args.args]
+                    defs.append(f"def {node.name}({', '.join(args)})")
+                    symbol_index[node.name] = module
+                elif isinstance(node, ast.ClassDef):
+                    methods = [
+                        f"{n.name}({', '.join(a.arg for a in n.args.args)})"
+                        for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                    ]
+                    defs.append(f"class {node.name}: methods = [{', '.join(methods)}]")
+                    symbol_index[node.name] = module
+            if defs:
+                lines.append(f"- module `{module}`:\n  " + "\n  ".join(defs))
+
+        text = "\n".join(lines) if lines else "(no other files were generated — write a minimal, self-contained script)"
+        return text, symbol_index
+
+    @staticmethod
+    def _find_import_mismatches(entry_code: str, symbol_index: Dict[str, str]) -> List[str]:
+        """Names the entry point imports from the WRONG module, per the real
+        symbol index — i.e. cases where we know exactly where a name really
+        lives and the generated code claims a different module for it. Not
+        flagged: names absent from the index (stdlib/third-party imports,
+        out of scope for this check).
+        """
+        try:
+            tree = ast.parse(entry_code)
+        except SyntaxError:
+            return []
+
+        mismatches = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.ImportFrom) or not node.module:
+                continue
+            for alias in node.names:
+                real_module = symbol_index.get(alias.name)
+                if real_module and real_module != node.module:
+                    mismatches.append(
+                        f"`{alias.name}` was imported from `{node.module}` but it's actually "
+                        f"defined in `{real_module}`"
+                    )
+        return mismatches
+
+    def run(self, state: CodegenState) -> CodegenState:
+        entry_point_path = state.get("entry_point_path")
+        if not entry_point_path:
+            logger.info("EntryPointAgent: no entry point identified in the plan, skipping")
+            return state
+
+        plan = state.get("plan", {})
+        entry_spec = next((f for f in plan.get("files", []) if f.get("path") == entry_point_path), None)
+        if not entry_spec:
+            logger.warning(f"EntryPointAgent: no plan spec for {entry_point_path}, skipping")
+            return state
+
+        already_generated = (
+            list(state.get("dataset_files", []))
+            + list(state.get("execution_files", []))
+            + list(state.get("evaluation_files", []))
+        )
+        module_signatures, symbol_index = self._introspect(self.config.output_dir, already_generated)
+
+        ups_ir = state.get("ups_ir", {})
+        config_template = state.get("config_template", {})
+        prompt_input = {
+            "file_path": entry_point_path,
+            "module_signatures": module_signatures,
+            "file_plan": json.dumps(entry_spec, ensure_ascii=False, indent=2),
+            "config_template": json.dumps(config_template, indent=2),
+            "ups_ir_summary": summarize_ups_ir(ups_ir, max_chars=3000),
+        }
+
+        absolute_path = self.config.output_dir / entry_point_path
+        absolute_path.parent.mkdir(parents=True, exist_ok=True)
+        logger.info(f"EntryPointAgent generating {absolute_path} from {len(already_generated)} real file signature(s)")
+
+        try:
+            code = strip_fences(self.chain.invoke(prompt_input))
+
+            # Even given ground-truth signatures, the model can still cite
+            # the wrong module for a real name (observed in practice). One
+            # deterministic, targeted retry beats trusting it silently.
+            mismatches = self._find_import_mismatches(code, symbol_index)
+            if mismatches:
+                logger.warning(f"EntryPointAgent: retrying {entry_point_path}, wrong import source(s): "
+                                f"{'; '.join(mismatches)}")
+                retry_input = dict(prompt_input)
+                retry_input["file_plan"] = (
+                    retry_input["file_plan"]
+                    + "\n\nYour previous attempt imported from the wrong module:\n"
+                    + "\n".join(f"- {m}" for m in mismatches)
+                    + "\nFix these specific imports; everything else about the approach was fine."
+                )
+                code = strip_fences(self.chain.invoke(retry_input))
+
+            absolute_path.write_text(code, encoding="utf-8")
+            state["entry_point_file"] = str(absolute_path)
+        except Exception as e:
+            logger.error(f"EntryPointAgent failed to generate {entry_point_path}: {e}")
+
         return state
 
 
@@ -1810,6 +2095,36 @@ CODE_FIX_PROMPT = (
 class CodeReviewDebugAgent:
     """AI-driven code review and iterative debugging with fix loops."""
 
+    @staticmethod
+    def _detect_stub_functions(code: str) -> List[str]:
+        """Functions/methods whose entire body is a no-op (`pass`, `...`, or
+        a bare string) — syntactically fine, semantically empty. The LLM
+        review doesn't reliably flag these on its own (a whole class of
+        `pass`-only stub methods passed review in practice — see git
+        history), so this is checked deterministically and force-merged
+        into the review result rather than left to the model's judgment.
+        """
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return []
+
+        stubs = []
+        for node in ast.walk(tree):
+            if not isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                continue
+            body = node.body
+            if body and isinstance(body[0], ast.Expr) and isinstance(body[0].value, ast.Constant) \
+                    and isinstance(body[0].value.value, str):
+                body = body[1:]  # skip a leading docstring
+            if not body:
+                continue
+            if all(isinstance(stmt, ast.Pass)
+                   or (isinstance(stmt, ast.Expr) and isinstance(stmt.value, ast.Constant))
+                   for stmt in body):
+                stubs.append(node.name)
+        return stubs
+
     def __init__(self, model_name: str = "gpt-4o-mini", temperature: float = 0.0,
                  max_iterations: int = 3):
         self.model_name = model_name
@@ -1886,6 +2201,17 @@ class CodeReviewDebugAgent:
 
                 # Review code with file analysis
                 review_result = self._review_code(code, file_spec, file_analysis_spec)
+
+                stub_functions = self._detect_stub_functions(code)
+                if stub_functions:
+                    review_result["passed"] = False
+                    review_result.setdefault("issues", [])
+                    review_result["issues"].append(
+                        f"These functions/methods have no real implementation (body is just a "
+                        f"no-op): {', '.join(stub_functions)}. Implement real logic per the file "
+                        f"spec — an empty stub is not acceptable even if it's syntactically valid."
+                    )
+
                 reviews[str(path)] = json.dumps(review_result, indent=2)
 
                 if review_result.get("passed", False):
@@ -2389,6 +2715,14 @@ def main(argv: List[str] | None = None) -> CodegenState:
             save_intermediate=not args.no_intermediate,
         )
 
+        # Decide file ownership ONCE, up front, so no two agents can ever
+        # write the same file (see assign_file_owners docstring for why this
+        # matters — a real bug that silently dropped a training entry point).
+        plan_files = state.get("plan", {}).get("files", [])
+        entry_point_path = find_entry_point_path(plan_files)
+        state["entry_point_path"] = entry_point_path
+        state["file_owners"] = assign_file_owners(plan_files, paper_type, entry_point_path)
+
         # Generate dataset code
         logger.info("Stage 5a: Generating dataset files...")
         dataset_agent = DatasetAgent(writer_config)
@@ -2404,11 +2738,19 @@ def main(argv: List[str] | None = None) -> CodegenState:
         evaluation_agent = EvaluationAgent(writer_config)
         state = traced(evaluation_agent, "evaluation_agent")
 
+        # Write the entry point LAST, from the real signatures of everything
+        # generated above, instead of guessing at them independently.
+        logger.info("Stage 5d: Generating entry point from real generated signatures...")
+        entry_point_agent = EntryPointAgent(writer_config)
+        state = traced(entry_point_agent, "entry_point_agent")
+
         # Consolidate all generated files
         all_generated = []
         all_generated.extend(state.get("dataset_files", []))
         all_generated.extend(state.get("execution_files", []))
         all_generated.extend(state.get("evaluation_files", []))
+        if state.get("entry_point_file"):
+            all_generated.append(state["entry_point_file"])
         state["generated_files"] = all_generated
 
         # Stage 6: Syntax checking (lightweight baseline)

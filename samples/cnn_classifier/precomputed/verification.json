@@ -4,53 +4,18 @@
   "findings": [
     {
       "category": "lint_violation",
-      "file": "data_loader.py",
-      "detail": "line 8:F401 'typing.Any' imported but unused"
-    },
-    {
-      "category": "lint_violation",
-      "file": "evaluation.py",
-      "detail": "line 9:F401 'os' imported but unused"
-    },
-    {
-      "category": "lint_violation",
-      "file": "evaluation.py",
-      "detail": "line 10:F401 'typing.Dict' imported but unused"
+      "file": "data/loaders.py",
+      "detail": "line 34:F841 local variable 'transform' is assigned to but never used"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 7:F401 'pandas as pd' imported but unused"
+      "detail": "line 4:F401 'data.loaders.normalize_images' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 12:F401 'training.train_model' imported but unused"
-    },
-    {
-      "category": "lint_violation",
-      "file": "main.py",
-      "detail": "line 43:F821 undefined name 'Any'"
-    },
-    {
-      "category": "lint_violation",
-      "file": "utils.py",
-      "detail": "line 101:F821 undefined name 'torch'"
-    },
-    {
-      "category": "lint_violation",
-      "file": "utils.py",
-      "detail": "line 125:F821 undefined name 'torch'"
-    },
-    {
-      "category": "lint_violation",
-      "file": "utils.py",
-      "detail": "line 129:F821 undefined name 'criterion'"
-    },
-    {
-      "category": "lint_violation",
-      "file": "utils.py",
-      "detail": "line 132:F821 undefined name 'torch'"
+      "detail": "line 6:F401 'models.tiny_conv_net.validate_model' imported but unused"
     }
   ]
 }

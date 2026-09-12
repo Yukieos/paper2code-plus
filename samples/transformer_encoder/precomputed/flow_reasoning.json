@@ -2,7 +2,7 @@
   "execution_order": [
     {
       "step_id": "ms1",
-      "description": "Define the model architecture using MiniEncoder.",
+      "description": "Define the model architecture for MiniEncoder based on the architecture definition question.",
       "sequence_index": 0,
       "source_reference": "Section 2",
       "figure_ids": [],
@@ -15,7 +15,7 @@
     },
     {
       "step_id": "ms2",
-      "description": "Prepare the dataset for training, including tokenization and mapping.",
+      "description": "Prepare the dataset for training based on the dataset preparation question.",
       "sequence_index": 1,
       "source_reference": "Section 3",
       "figure_ids": [],
@@ -28,7 +28,7 @@
     },
     {
       "step_id": "ms3",
-      "description": "Train the MiniEncoder model using the prepared dataset and specified training parameters.",
+      "description": "Train the MiniEncoder model using the prepared dataset and specified training procedure.",
       "sequence_index": 2,
       "source_reference": "Section 4",
       "figure_ids": [],
@@ -41,7 +41,7 @@
     },
     {
       "step_id": "ms4",
-      "description": "Evaluate the trained model on the test dataset and report metrics.",
+      "description": "Evaluate the performance of the trained MiniEncoder model using evaluation metrics.",
       "sequence_index": 3,
       "source_reference": "Section 5",
       "figure_ids": [],
@@ -70,7 +70,7 @@
       "from_step": "ms3",
       "to_step": "ms4",
       "condition": null,
-      "rationale": "Model must be trained before evaluation."
+      "rationale": "Model must be trained before evaluation can occur."
     }
   ],
   "variable_dependencies": [
@@ -87,7 +87,7 @@
       "rationale": null
     },
     {
-      "variable": "trained_model",
+      "variable": "training_results",
       "depends_on": [
         "model_architecture",
         "dataset"
@@ -98,7 +98,7 @@
     {
       "variable": "evaluation_metrics",
       "depends_on": [
-        "trained_model"
+        "training_results"
       ],
       "source_reference": "Section 5",
       "rationale": null

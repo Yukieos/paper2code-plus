@@ -12,7 +12,8 @@
         - pip
           - torch
   - pip:
-    - dataset
+    - data_loader
+    - evaluation
     - matplotlib>=3.4.0
     - model
     - numpy
@@ -20,5 +21,6 @@
     - pytest>=6.2.0
     - scikit-learn
     - scipy>=1.7.0
-    - tqdm
+    - training
     - transformers
+    - utils

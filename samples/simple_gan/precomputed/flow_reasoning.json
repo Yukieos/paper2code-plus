@@ -2,7 +2,7 @@
   "execution_order": [
     {
       "step_id": "s1",
-      "description": "Initialize the MiniGAN model and set up the environment.",
+      "description": "Initialize the training process and set random seed for reproducibility.",
       "sequence_index": 0,
       "source_reference": "Abstract",
       "figure_ids": [],
@@ -10,9 +10,7 @@
       "equation_ids": [],
       "prerequisites": [],
       "consumes_variables": [],
-      "produces_variables": [
-        "model_initialized"
-      ],
+      "produces_variables": [],
       "trigger_conditions": []
     },
     {
@@ -23,93 +21,118 @@
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
-      "prerequisites": [
-        "model_initialized"
-      ],
+      "prerequisites": [],
       "consumes_variables": [],
       "produces_variables": [
-        "train_loader",
-        "test_loader"
+        "dataset"
       ],
       "trigger_conditions": []
     },
     {
       "step_id": "s3",
-      "description": "Define the generator and discriminator architectures.",
+      "description": "Define the Generator model architecture as per the specifications in the paper.",
       "sequence_index": 2,
-      "source_reference": "Section 2",
+      "source_reference": "Section 2.1",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
-      "prerequisites": [
-        "train_loader"
-      ],
+      "prerequisites": [],
       "consumes_variables": [],
       "produces_variables": [
-        "generator",
-        "discriminator"
+        "generator"
       ],
       "trigger_conditions": []
     },
     {
       "step_id": "s4",
-      "description": "Train the MiniGAN model using the defined loss function and optimizer.",
+      "description": "Define the Discriminator model architecture as per the specifications in the paper.",
       "sequence_index": 3,
+      "source_reference": "Section 2.2",
+      "figure_ids": [],
+      "algorithm_ids": [],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [],
+      "produces_variables": [
+        "discriminator"
+      ],
+      "trigger_conditions": []
+    },
+    {
+      "step_id": "s5",
+      "description": "Set up the training loop, including the optimizer and loss function.",
+      "sequence_index": 4,
       "source_reference": "Section 4",
       "figure_ids": [],
       "algorithm_ids": [],
-      "equation_ids": [
-        "e1"
-      ],
-      "prerequisites": [
-        "generator",
-        "discriminator",
-        "train_loader"
-      ],
+      "equation_ids": [],
+      "prerequisites": [],
       "consumes_variables": [
-        "train_loader"
+        "generator",
+        "discriminator"
       ],
       "produces_variables": [
-        "generator_trained",
-        "discriminator_trained"
+        "optimizer"
+      ],
+      "trigger_conditions": []
+    },
+    {
+      "step_id": "s6",
+      "description": "Train the MiniGAN model using the defined training loop and loss function.",
+      "sequence_index": 5,
+      "source_reference": "Section 4",
+      "figure_ids": [],
+      "algorithm_ids": [
+        "l1"
+      ],
+      "equation_ids": [],
+      "prerequisites": [],
+      "consumes_variables": [
+        "dataset",
+        "generator",
+        "discriminator",
+        "optimizer"
+      ],
+      "produces_variables": [
+        "trained_generator",
+        "trained_discriminator"
       ],
       "trigger_conditions": [
         "training_phase"
       ]
     },
     {
-      "step_id": "s5",
-      "description": "Evaluate the trained MiniGAN model using specified metrics.",
-      "sequence_index": 4,
+      "step_id": "s7",
+      "description": "Evaluate the trained MiniGAN model using the specified metrics.",
+      "sequence_index": 6,
       "source_reference": "Section 5",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
-      "prerequisites": [
-        "generator_trained",
-        "discriminator_trained"
+      "prerequisites": [],
+      "consumes_variables": [
+        "trained_generator",
+        "trained_discriminator"
       ],
-      "consumes_variables": [],
       "produces_variables": [
-        "evaluation_results"
+        "evaluation_metrics"
       ],
       "trigger_conditions": []
     },
     {
-      "step_id": "s6",
-      "description": "Log the training and evaluation results for analysis.",
-      "sequence_index": 5,
-      "source_reference": "Section 5",
+      "step_id": "s8",
+      "description": "Save the trained models for future use.",
+      "sequence_index": 7,
+      "source_reference": "Abstract",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
-      "prerequisites": [
-        "evaluation_results"
+      "prerequisites": [],
+      "consumes_variables": [
+        "trained_generator",
+        "trained_discriminator"
       ],
-      "consumes_variables": [],
-      "produces_variables": [
-        "logs"
-      ],
+      "produces_variables": [],
       "trigger_conditions": []
     }
   ],
@@ -118,92 +141,97 @@
       "from_step": "s1",
       "to_step": "s2",
       "condition": null,
-      "rationale": "Model initialization is required before loading the dataset."
+      "rationale": null
     },
     {
       "from_step": "s2",
       "to_step": "s3",
       "condition": null,
-      "rationale": "Dataset loading is necessary to define the model architectures."
+      "rationale": null
     },
     {
       "from_step": "s3",
       "to_step": "s4",
       "condition": null,
-      "rationale": "Model architectures must be defined before training."
+      "rationale": null
     },
     {
       "from_step": "s4",
       "to_step": "s5",
       "condition": null,
-      "rationale": "Training must be completed before evaluation."
+      "rationale": null
     },
     {
       "from_step": "s5",
       "to_step": "s6",
       "condition": null,
-      "rationale": "Evaluation results need to be logged after evaluation."
+      "rationale": null
+    },
+    {
+      "from_step": "s6",
+      "to_step": "s7",
+      "condition": null,
+      "rationale": null
+    },
+    {
+      "from_step": "s7",
+      "to_step": "s8",
+      "condition": null,
+      "rationale": null
     }
   ],
   "variable_dependencies": [
     {
-      "variable": "train_loader",
-      "depends_on": [
-        "model_initialized"
-      ],
+      "variable": "dataset",
+      "depends_on": [],
       "source_reference": "Section 3",
-      "rationale": "The train_loader is produced after the dataset is loaded."
+      "rationale": null
     },
     {
       "variable": "generator",
-      "depends_on": [
-        "train_loader"
-      ],
-      "source_reference": "Section 2",
-      "rationale": "The generator is defined based on the training data."
+      "depends_on": [],
+      "source_reference": "Section 2.1",
+      "rationale": null
     },
     {
       "variable": "discriminator",
-      "depends_on": [
-        "train_loader"
-      ],
-      "source_reference": "Section 2",
-      "rationale": "The discriminator is defined based on the training data."
+      "depends_on": [],
+      "source_reference": "Section 2.2",
+      "rationale": null
     },
     {
-      "variable": "generator_trained",
+      "variable": "optimizer",
       "depends_on": [
         "generator",
-        "train_loader"
+        "discriminator"
       ],
       "source_reference": "Section 4",
-      "rationale": "The generator is trained using the training data."
+      "rationale": null
     },
     {
-      "variable": "discriminator_trained",
+      "variable": "trained_generator",
       "depends_on": [
-        "discriminator",
-        "train_loader"
+        "generator"
       ],
       "source_reference": "Section 4",
-      "rationale": "The discriminator is trained using the training data."
+      "rationale": null
     },
     {
-      "variable": "evaluation_results",
+      "variable": "trained_discriminator",
       "depends_on": [
-        "generator_trained",
-        "discriminator_trained"
+        "discriminator"
       ],
-      "source_reference": "Section 5",
-      "rationale": "Evaluation results are produced after training."
+      "source_reference": "Section 4",
+      "rationale": null
     },
     {
-      "variable": "logs",
+      "variable": "evaluation_metrics",
       "depends_on": [
-        "evaluation_results"
+        "trained_generator",
+        "trained_discriminator"
       ],
       "source_reference": "Section 5",
-      "rationale": "Logs are created based on the evaluation results."
+      "rationale": null
     }
   ]
 }
