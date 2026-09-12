@@ -24,6 +24,14 @@ Recent UPS-IR (extraction) upgrades:
 
 Each UI run is isolated under `runs/<timestamp>/` so it never touches the sample `UPS-IR.json` / `generated_repo/` checked into this repo.
 
+### Sharing the UI with other people
+`streamlit run app.py` only binds to your machine — nobody else can reach it. To give other people a real link:
+
+1. Push this repo to GitHub (already done if you're reading this from the remote).
+2. Go to [share.streamlit.io](https://share.streamlit.io), sign in with GitHub, **New app** → pick this repo/branch → main file `app.py`. Streamlit Cloud can deploy private repos once you grant its GitHub App access.
+3. In **Advanced settings → Secrets**, paste from `.streamlit/secrets.toml.example`. **Leave `OPENAI_API_KEY` out unless you want to personally pay for every visitor's usage** — by default each visitor pastes their own key in the sidebar; only set `OPENAI_API_KEY` + `PAPER2CODE_ALLOW_SHARED_KEY=1` for a small trusted audience you're OK covering.
+4. Free-tier Streamlit Cloud is ~1 CPU/1GB RAM and runs one instance — fine for a few people trying it sequentially, not for heavy concurrent use.
+
 ### Option B: CLI
 - **Install deps**: `pip install -r requirements.txt`
 - **Stage 1 – run UPS-IR agent pipeline**: `python main.py test2/part.md`
@@ -39,6 +47,26 @@ Each UI run is isolated under `runs/<timestamp>/` so it never touches the sample
 - **Verifier**: schema + cross-reference check (accepts ids and source references across all entities).
 - **Synthesizer**: split UPS-IR into `UPS-IR_Output/<section>.json`.
 - **Codegen (multi-agent)**: `codegen_pipeline.py` classifies the paper type, plans a repository, generates code via specialized agents (Dataset/Execution/Evaluation), then runs integration + static checks to produce `generated_repo/`.
+
+## Evaluation & Failure-Mining Framework (`eval/`)
+
+Every agent step *can* be instrumented, shipped to S3 as a structured trace, and later mined for recurring failure patterns across a fixed 18-mode taxonomy (`eval/taxonomy.py`) spanning tool use, reasoning/planning, and generated code.
+
+**It's off by default** so plain CLI/UI usage never needs AWS credentials. To turn it on:
+
+1. Set `PAPER2CODE_TRACE_ENABLED=1` in `.env` (and the usual `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION`, or rely on `~/.aws/credentials` / an instance role instead).
+2. Run the pipeline as usual (CLI or UI). Each `agent.run(state)` call in `main.py` / `codegen_pipeline.py` is wrapped with `eval.instrumentation.run_traced(...)`, which uploads one JSON trace per agent step to `s3://<PAPER2CODE_TRACE_BUCKET>/traces/<run_id>/...` (falls back to `runs/_traces_local/` if S3 is unreachable — tracing failures never break the actual run).
+3. Mine what's accumulated:
+   ```bash
+   python -m eval.mine_failures                # every run in the bucket
+   python -m eval.mine_failures --run-ids <id>  # just one run
+   python -m eval.mine_failures --no-judge      # skip the LLM classification, grader signals only
+   ```
+
+**How a run gets classified:**
+- `eval/graders.py` — deterministic signals: `TraceGrader` reads the trace itself (a rejected verification, a malformed-JSON retry loop, a timeout); `CodeGrader` runs flake8/mypy/syntax/import-resolution/TODO-detection over `generated_repo/`.
+- `eval/judge.py` — an LLM-as-judge pass for what graders can't pin down mechanically (e.g. "did the extractor actually understand the paper"), given the taxonomy rubric + grader signals + a condensed trace.
+- `eval/mine_failures.py` — aggregates both into a JSON report (`output/failure_report_<timestamp>.json`) with per-run classifications and a taxonomy-wide failure-mode histogram.
 
 ## Extended UPS-IR Schema (Key Fields)
 - `sections`: `{id, title, level, summary, key_points[], source_reference, source_text}`

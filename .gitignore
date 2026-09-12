@@ -8,3 +8,4 @@ venv/
 *.egg-info/
 .env
 runs/
+.streamlit/secrets.toml

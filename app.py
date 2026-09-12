@@ -91,10 +91,18 @@ def stream_subprocess(cmd, cwd, env, log_placeholder, progress_placeholder, mark
 
 st.set_page_config(page_title="Paper2Code", page_icon="🧪", layout="wide")
 
+# When this app is deployed somewhere public (e.g. Streamlit Community Cloud),
+# a host-configured OPENAI_API_KEY must NOT be silently handed to every visitor
+# — that would let strangers spend the host's money. It's only pre-filled when
+# the host explicitly opts in (for their own private/local use).
+ALLOW_SHARED_KEY = os.environ.get("PAPER2CODE_ALLOW_SHARED_KEY", "").lower() in ("1", "true", "yes")
+
 st.sidebar.title("⚙️ Settings")
 api_key = st.sidebar.text_input(
-    "OpenAI API key", type="password", value=os.environ.get("OPENAI_API_KEY", ""),
-    help="Used only for this session's requests; not written to disk.",
+    "OpenAI API key",
+    type="password",
+    value=os.environ.get("OPENAI_API_KEY", "") if ALLOW_SHARED_KEY else "",
+    help="Bring your own key — used only for this session's requests, never written to disk.",
 )
 base_url = st.sidebar.text_input(
     "OpenAI base URL", value=os.environ.get("OPENAI_BASE_URL", "https://api.openai.com/v1"),

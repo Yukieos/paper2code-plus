@@ -152,19 +152,26 @@ def parse_agent_sequence(agent_string: str) -> List[str]:
 
 
 def run_sequential(agent_names: List[str], agents: Dict[str, object]) -> PipelineState:
+    from eval.instrumentation import default_run_id, run_traced
+    from eval.trace_store import TraceStore
+
     state: PipelineState = initial_state()
+    run_id = default_run_id()
+    store = TraceStore()
 
     for name in agent_names:
         agent = agents[name]
         if name == "verifier":
-            verified = agent.run(state)  # type: ignore[attr-defined]
+            verified = run_traced(agent, state, run_id=run_id, stage="extraction",
+                                   agent_name=name, store=store)  # type: ignore[attr-defined]
             state.setdefault("artifacts", {})
             state["artifacts"]["verified"] = str(bool(verified))
             if not verified:
                 logging.error("Verification failed. Halting pipeline before synthesis.")
                 break
         else:
-            state = agent.run(state)  # type: ignore[attr-defined]
+            state = run_traced(agent, state, run_id=run_id, stage="extraction",
+                                agent_name=name, store=store)  # type: ignore[attr-defined]
 
     if "ups_ir" not in state:
         logging.warning("UPS-IR structure not present in state after sequential run.")

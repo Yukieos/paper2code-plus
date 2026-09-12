@@ -2222,6 +2222,9 @@ def main(argv: List[str] | None = None) -> CodegenState:
     if set_api_keys_inline is not None:  # pragma: no cover - convenience for local testing
         set_api_keys_inline()
 
+    from eval.instrumentation import default_run_id, run_traced
+    from eval.trace_store import TraceStore
+
     logging.basicConfig(
         level=logging.INFO,
         format="%(asctime)s [%(levelname)s] %(name)s - %(message)s",
@@ -2229,6 +2232,12 @@ def main(argv: List[str] | None = None) -> CodegenState:
     )
 
     args = build_arg_parser().parse_args(argv)
+    run_id = default_run_id()
+    trace_store = TraceStore()
+
+    def traced(agent: Any, agent_name: str) -> CodegenState:
+        return run_traced(agent, state, run_id=run_id, stage="codegen",
+                           agent_name=agent_name, store=trace_store, model=args.model)
 
     ups_ir_path: Path = args.ups_ir_path.resolve()
     if not ups_ir_path.exists():
@@ -2242,7 +2251,7 @@ def main(argv: List[str] | None = None) -> CodegenState:
     # Stage 0: Classify paper type
     logger.info("Stage 0: Classifying paper type")
     classifier = PaperTypeClassifier()
-    state = classifier.run(state)
+    state = traced(classifier, "paper_type_classifier")
     paper_type = state.get("paper_type", PaperType.ML_TRAINING.value)
 
     # Stage 1: Initial planning
@@ -2254,7 +2263,7 @@ def main(argv: List[str] | None = None) -> CodegenState:
             temperature=args.temperature,
         )
     )
-    state = planner.run(state)
+    state = traced(planner, "planner")
 
     # Stage 2: Review and revise plan (unless skipped)
     if not args.skip_review:
@@ -2266,7 +2275,7 @@ def main(argv: List[str] | None = None) -> CodegenState:
                 temperature=0.3,
             )
         )
-        state = reviewer.run(state)
+        state = traced(reviewer, "plan_reviewer")
 
     # Stage 3: Derive flow reasoning from UPS-IR (always run so plan/code share context)
     logger.info("Stage 3: Deriving flow reasoning")
@@ -2278,32 +2287,32 @@ def main(argv: List[str] | None = None) -> CodegenState:
             temperature=args.temperature,
         )
     )
-    state = flow_reasoner.run(state)
+    state = traced(flow_reasoner, "flow_reasoner")
 
     # Stage 4: Analyze missing parameters
     if not args.skip_missing_params:
         logger.info("Stage 4: Analyzing missing parameters")
         reporter = MissingParameterReportAgent(ParameterReportConfig(args.missing_params_path))
-        state = reporter.run(state)
+        state = traced(reporter, "missing_parameter_reporter")
 
         placeholder_agent = ParameterPlaceholderAgent(
             ParameterPlaceholderConfig(output_path=Path("output") / "parameters_to_fill.json")
         )
-        state = placeholder_agent.run(state)
+        state = traced(placeholder_agent, "parameter_placeholder")
 
         config_agent = ConfigGeneratorAgent(output_path=Path("output") / "config_template.json")
-        state = config_agent.run(state)
+        state = traced(config_agent, "config_generator")
 
     # Stage 4.5: AI-Driven Dependency Analysis (before code generation)
     if not args.plan_only:
         logger.info("Stage 4.5: AI-Driven Dependency Analysis")
         dep_analyzer = DependencyAnalysisAgent(model_name=args.model, temperature=args.temperature)
-        state = dep_analyzer.run(state)
+        state = traced(dep_analyzer, "dependency_analyzer")
 
         # Stage 4.6: File-level Analysis (detailed specifications for code review)
         logger.info("Stage 4.6: File-level Analysis")
         file_analyzer = FileAnalysisAgent(model_name=args.model, temperature=args.temperature)
-        state = file_analyzer.run(state)
+        state = traced(file_analyzer, "file_analyzer")
 
     # Stage 5: Generate code using specialized agents (unless plan-only)
     if not args.plan_only:
@@ -2320,17 +2329,17 @@ def main(argv: List[str] | None = None) -> CodegenState:
         # Generate dataset code
         logger.info("Stage 5a: Generating dataset files...")
         dataset_agent = DatasetAgent(writer_config)
-        state = dataset_agent.run(state)
+        state = traced(dataset_agent, "dataset_agent")
 
         # Generate execution code (training/algorithm)
         logger.info(f"Stage 5b: Generating execution files ({paper_type})...")
         execution_agent = ExecutionAgent(writer_config)
-        state = execution_agent.run(state)
+        state = traced(execution_agent, "execution_agent")
 
         # Generate evaluation code
         logger.info("Stage 5c: Generating evaluation files...")
         evaluation_agent = EvaluationAgent(writer_config)
-        state = evaluation_agent.run(state)
+        state = traced(evaluation_agent, "evaluation_agent")
 
         # Consolidate all generated files
         all_generated = []
@@ -2342,7 +2351,7 @@ def main(argv: List[str] | None = None) -> CodegenState:
         # Stage 6: Syntax checking (lightweight baseline)
         logger.info("Stage 6: Running syntax checks")
         syntax_checker = SyntaxCheckerAgent(output_dir=args.output_dir)
-        state = syntax_checker.run(state)
+        state = traced(syntax_checker, "syntax_checker")
 
         syntax_errors = state.get("syntax_errors", [])
         if syntax_errors:
@@ -2359,12 +2368,12 @@ def main(argv: List[str] | None = None) -> CodegenState:
             temperature=0.1,
             max_iterations=3
         )
-        state = code_reviewer.run(state)
+        state = traced(code_reviewer, "code_review_debug")
 
         # Stage 8: Generate environment configuration files
         logger.info("Stage 8: Generating environment configuration files")
         env_generator = EnvironmentGeneratorAgent(output_dir=args.output_dir)
-        state = env_generator.run(state)
+        state = traced(env_generator, "environment_generator")
 
     logger.info("Enhanced codegen pipeline completed successfully!")
     logger.info(f"Paper type: {paper_type}")
