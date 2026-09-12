@@ -188,6 +188,13 @@ class StructurerAgent:
             normalized.append(item)
         return normalized
 
+    # The extractor prompt asks for {"from", "to", "type"}, but the LLM
+    # sometimes drifts to more "natural" key names instead (source/target,
+    # method_id/related_method_id, ...). Rather than let that fail schema
+    # validation downstream, normalize the common aliases here.
+    _RELATION_FROM_ALIASES = ("from", "source", "source_id", "method_id", "subject")
+    _RELATION_TO_ALIASES = ("to", "target", "target_id", "related_method_id", "object")
+
     def _normalize_relations(self, items: Any) -> list[Dict[str, Any]]:
         if not isinstance(items, Iterable) or isinstance(items, (str, bytes)):
             return []
@@ -197,9 +204,20 @@ class StructurerAgent:
             if not isinstance(entry, dict):
                 continue
             item = dict(entry)
-            for field in ("from", "to"):
-                if field in item and item[field] is not None:
-                    item[field] = str(item[field])
+
+            if not item.get("from"):
+                item["from"] = next((item[a] for a in self._RELATION_FROM_ALIASES if item.get(a)), None)
+            if not item.get("to"):
+                item["to"] = next((item[a] for a in self._RELATION_TO_ALIASES if item.get(a)), None)
+            if not item.get("type"):
+                item["type"] = item.get("relation_type") or item.get("relationship")
+
+            if not item.get("from") or not item.get("to") or not item.get("type"):
+                logger.warning("Dropping relation missing from/to/type after alias normalization: %r", entry)
+                continue
+
+            for field in ("from", "to", "type"):
+                item[field] = str(item[field])
             normalized.append(item)
         return normalized
 
