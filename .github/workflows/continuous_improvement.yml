@@ -1,0 +1,57 @@
+name: Continuous Agent Improvement
+
+# Manual trigger only — this calls OpenAI (and optionally S3) for real, so it
+# never runs on a schedule or on push. Trigger it from the Actions tab when
+# you actually want to spend a cycle mining/fixing a failure.
+on:
+  workflow_dispatch:
+    inputs:
+      failure_mode:
+        description: >
+          Specific failure mode id to target (see eval/taxonomy.py), e.g.
+          syntax_error. Leave blank to target whichever mode is most common
+          across recently mined runs.
+        required: false
+        default: ""
+      model:
+        description: "Model to use for diagnosis/proposal/gate runs"
+        required: false
+        default: "gpt-4o-mini"
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  improve:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Configure git identity for the proposal commit
+        run: |
+          git config user.name "paper2code-improve-bot"
+          git config user.email "actions@users.noreply.github.com"
+
+      - name: Run improvement cycle
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          OPENAI_BASE_URL: ${{ secrets.OPENAI_BASE_URL }}
+          AWS_ACCESS_KEY_ID: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          AWS_SECRET_ACCESS_KEY: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          PAPER2CODE_TRACE_BUCKET: ${{ secrets.PAPER2CODE_TRACE_BUCKET }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          python -m improve.run_cycle \
+            ${{ github.event.inputs.failure_mode != '' && format('--failure-mode {0}', github.event.inputs.failure_mode) || '' }} \
+            --model "${{ github.event.inputs.model }}"

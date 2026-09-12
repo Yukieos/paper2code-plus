@@ -68,6 +68,32 @@ Every agent step *can* be instrumented, shipped to S3 as a structured trace, and
 - `eval/judge.py` — an LLM-as-judge pass for what graders can't pin down mechanically (e.g. "did the extractor actually understand the paper"), given the taxonomy rubric + grader signals + a condensed trace.
 - `eval/mine_failures.py` — aggregates both into a JSON report (`output/failure_report_<timestamp>.json`) with per-run classifications and a taxonomy-wide failure-mode histogram.
 
+## Continuous Agent Improvement (`improve/`)
+
+Takes the mining above one step further: periodically diagnoses *why* the most common failure mode is happening, drafts a fix, and — only if it survives a held-out + regression gate — opens a PR for human review. It never merges its own change.
+
+```
+mine failures → pick most common mode → diagnose root cause → propose a
+prompt-only fix → run held-out+regression gate before vs. after → if no
+regressions: push branch + open PR (human reviews & merges) → else: discard
+```
+
+**Scope is deliberately narrow**, by design decision, not by accident:
+- Only prompt *wording* can be changed — `improve/prompt_registry.py` is an explicit allowlist of every prompt actually wired into the live pipeline, and refuses any edit that changes the `{placeholder}` variables a prompt depends on (that would break the call site, not just reword it).
+- The gate is conservative: a proposed change is rejected if it newly breaks any regression fixture, or increases the total grader-signal count across held-out fixtures. Anything more nuanced is left for the human reading the PR.
+- It's manually triggered (`.github/workflows/continuous_improvement.yml`, `workflow_dispatch` only) — every run spends real OpenAI (and mining, S3) usage, so it's opt-in per cycle rather than on a schedule.
+
+**Before running it**, populate `eval/fixtures/heldout/` and `eval/fixtures/regression/` with a handful of paper Markdown files (see `eval/fixtures/README.md`) — without those, there's nothing to gate against and `improve.run_cycle` refuses to run.
+
+```bash
+# locally, after collecting some traces (PAPER2CODE_TRACE_ENABLED=1):
+python -m improve.run_cycle --dry-run              # diagnose + propose only, no git/gh calls
+python -m improve.run_cycle                         # full cycle: gate + push branch + open PR
+python -m improve.run_cycle --failure-mode syntax_error
+```
+
+Or trigger the `Continuous Agent Improvement` workflow from the GitHub Actions tab. It needs these repo secrets: `OPENAI_API_KEY` (required), `AWS_ACCESS_KEY_ID` / `AWS_SECRET_ACCESS_KEY` / `AWS_DEFAULT_REGION` / `PAPER2CODE_TRACE_BUCKET` (only if traces live in S3 rather than being mined locally).
+
 ## Extended UPS-IR Schema (Key Fields)
 - `sections`: `{id, title, level, summary, key_points[], source_reference, source_text}`
 - `figures`: `{id, name, description, related_components[], source_reference}`
