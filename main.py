@@ -151,27 +151,67 @@ def parse_agent_sequence(agent_string: str) -> List[str]:
     return sequence
 
 
+MAX_VERIFICATION_RETRIES = 2
+
+
 def run_sequential(agent_names: List[str], agents: Dict[str, object]) -> PipelineState:
+    """Runs the extraction agents in order — except this isn't purely
+    fixed-sequence: on a VerifierAgent rejection, this backtracks to the
+    extractor with the specific validation error as feedback instead of
+    just halting (bounded to MAX_VERIFICATION_RETRIES). Two other actions
+    were considered and deliberately left out: retrying verification itself
+    (pointless — it's deterministic given the same UPS-IR) and backtracking
+    past the extractor to the reader (there's nothing wrong with the raw
+    text on a schema/integrity failure, only with how it was structured).
+    """
     from eval.instrumentation import default_run_id, run_traced
     from eval.trace_store import TraceStore
 
     state: PipelineState = initial_state()
     run_id = default_run_id()
     store = TraceStore()
+    can_retry = "extractor" in agent_names
+    retries_used = 0
 
-    for name in agent_names:
+    i = 0
+    while i < len(agent_names):
+        name = agent_names[i]
         agent = agents[name]
+
         if name == "verifier":
-            verified = run_traced(agent, state, run_id=run_id, stage="extraction",
-                                   agent_name=name, store=store)  # type: ignore[attr-defined]
+            try:
+                verified = run_traced(agent, state, run_id=run_id, stage="extraction",
+                                       agent_name=name, store=store)  # type: ignore[attr-defined]
+                verifier_error = None
+            except ValueError as exc:
+                verified = False
+                verifier_error = str(exc)
+
             state.setdefault("artifacts", {})
             state["artifacts"]["verified"] = str(bool(verified))
-            if not verified:
-                logging.error("Verification failed. Halting pipeline before synthesis.")
-                break
-        else:
-            state = run_traced(agent, state, run_id=run_id, stage="extraction",
-                                agent_name=name, store=store)  # type: ignore[attr-defined]
+
+            if verified:
+                i += 1
+                continue
+
+            if can_retry and retries_used < MAX_VERIFICATION_RETRIES:
+                retries_used += 1
+                logging.warning(
+                    "Verification failed (%s); backtracking to extractor with feedback "
+                    "(attempt %d/%d) [ReAct: RETRY_WITH_FEEDBACK]",
+                    verifier_error, retries_used, MAX_VERIFICATION_RETRIES,
+                )
+                state["verifier_feedback"] = verifier_error
+                i = agent_names.index("extractor")
+                continue
+
+            logging.error("Verification failed after %d retries. Halting pipeline before synthesis.",
+                           retries_used)
+            break
+
+        state = run_traced(agent, state, run_id=run_id, stage="extraction",
+                            agent_name=name, store=store)  # type: ignore[attr-defined]
+        i += 1
 
     if "ups_ir" not in state:
         logging.warning("UPS-IR structure not present in state after sequential run.")
@@ -180,6 +220,12 @@ def run_sequential(agent_names: List[str], agents: Dict[str, object]) -> Pipelin
 
 
 def run_via_graph(agents: Dict[str, object]) -> PipelineState:
+    """LangGraph version of the same ReAct backtrack in run_sequential,
+    expressed the idiomatic LangGraph way: a conditional edge out of
+    "verifier" that routes back to "extractor" (with feedback) on
+    rejection, forward to "synthesizer" on success, or to END once the
+    retry budget is spent — a real cycle in the graph, not a fixed chain.
+    """
     try:
         from langgraph.graph import END, StateGraph
     except ImportError as exc:
@@ -192,10 +238,31 @@ def run_via_graph(agents: Dict[str, object]) -> PipelineState:
     builder.add_node("structurer", lambda s: agents["structurer"].run(s))  # type: ignore[attr-defined]
 
     def verifier_wrapper(state: PipelineState) -> PipelineState:
-        result = agents["verifier"].run(state)  # type: ignore[attr-defined]
-        if not result:
-            raise RuntimeError("VerifierAgent rejected the UPS-IR structure.")
+        try:
+            verified = agents["verifier"].run(state)  # type: ignore[attr-defined]
+            state["artifacts"] = {**state.get("artifacts", {}), "verified": str(bool(verified))}
+        except ValueError as exc:
+            state["artifacts"] = {**state.get("artifacts", {}), "verified": "False"}
+            state["verifier_feedback"] = str(exc)
         return state
+
+    def route_after_verifier(state: PipelineState) -> str:
+        if state.get("artifacts", {}).get("verified") == "True":
+            return "synthesizer"
+
+        retries = state.get("verification_retries", 0)
+        if retries < MAX_VERIFICATION_RETRIES:
+            state["verification_retries"] = retries + 1
+            logging.warning(
+                "Verification failed (%s); backtracking to extractor with feedback "
+                "(attempt %d/%d) [ReAct: RETRY_WITH_FEEDBACK]",
+                state.get("verifier_feedback"), retries + 1, MAX_VERIFICATION_RETRIES,
+            )
+            return "extractor"
+
+        logging.error("Verification failed after %d retries. Halting pipeline before synthesis.",
+                       retries)
+        return END
 
     builder.add_node("verifier", verifier_wrapper)
     builder.add_node("synthesizer", lambda s: agents["synthesizer"].run(s))  # type: ignore[attr-defined]
@@ -204,7 +271,8 @@ def run_via_graph(agents: Dict[str, object]) -> PipelineState:
     builder.add_edge("reader", "extractor")
     builder.add_edge("extractor", "structurer")
     builder.add_edge("structurer", "verifier")
-    builder.add_edge("verifier", "synthesizer")
+    builder.add_conditional_edges("verifier", route_after_verifier,
+                                   {"synthesizer": "synthesizer", "extractor": "extractor", END: END})
     builder.add_edge("synthesizer", END)
 
     graph = builder.compile()

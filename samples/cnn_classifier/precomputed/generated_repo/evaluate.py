@@ -1,7 +1,8 @@
-import json
-import logging
-import numpy as np
 import torch
+import numpy as np
+import logging
+import json
+import os
 from sklearn.metrics import accuracy_score, confusion_matrix
 from torch.utils.data import DataLoader
 from typing import Tuple
@@ -10,39 +11,38 @@ from typing import Tuple
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
 
-def evaluate_model(model: torch.nn.Module, test_loader: DataLoader) -> Tuple[float, np.ndarray]:
+def evaluate(model: torch.nn.Module, test_loader: DataLoader) -> Tuple[float, np.ndarray]:
     """
     Evaluates the TinyConvNet model on the test dataset and returns accuracy and confusion matrix,
-    with error handling for evaluation process.
+    with error handling and logging.
 
     Args:
         model (torch.nn.Module): The TinyConvNet model instance.
-        test_loader (DataLoader): Data loader for testing data.
+        test_loader (DataLoader): DataLoader for test data.
 
     Returns:
-        Tuple[float, np.ndarray]: Accuracy of the model on the test dataset and confusion matrix.
+        Tuple[float, np.ndarray]: Accuracy of the model on test data and confusion matrix.
     """
     try:
         # Set model to evaluation mode
         model.eval()
-        all_preds = []
+        all_predictions = []
         all_labels = []
 
-        # Iterate over test_loader
+        # Iterate over batches in test_loader
         with torch.no_grad():
-            for data in test_loader:
-                inputs, labels = data
+            for inputs, labels in test_loader:
                 outputs = model(inputs)
-                _, preds = torch.max(outputs, 1)
-                all_preds.extend(preds.cpu().numpy())
+                _, predicted = torch.max(outputs, 1)
+                all_predictions.extend(predicted.cpu().numpy())
                 all_labels.extend(labels.cpu().numpy())
 
         # Calculate accuracy and confusion matrix
-        accuracy = accuracy_score(all_labels, all_preds)
-        conf_matrix = confusion_matrix(all_labels, all_preds)
+        accuracy = accuracy_score(all_labels, all_predictions)
+        conf_matrix = confusion_matrix(all_labels, all_predictions)
 
-        # Log evaluation results
-        logger.info(f"Evaluation completed. Accuracy: {accuracy:.4f}")
+        # Log evaluation metrics
+        logger.info(f"Accuracy: {accuracy:.4f}")
         logger.info(f"Confusion Matrix:\n{conf_matrix}")
 
         # Save results in structured format
@@ -56,7 +56,12 @@ def evaluate_model(model: torch.nn.Module, test_loader: DataLoader) -> Tuple[flo
         return accuracy, conf_matrix
 
     except Exception as e:
-        logger.error(f"Error during evaluation: {e}")
-        raise e  # Re-raise the exception after logging
+        logger.error(f"Error during evaluation: {str(e)}")
+        raise
 
-# Additional functions for visualization and other metrics can be added here as needed.
+# Example usage (commented out to avoid execution in module context)
+# if __name__ == "__main__":
+#     # Load your model and test_loader here
+#     model = ...  # Load your trained model
+#     test_loader = ...  # Load your test DataLoader
+#     evaluate(model, test_loader)

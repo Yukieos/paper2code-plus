@@ -4,28 +4,93 @@
   "findings": [
     {
       "category": "lint_violation",
-      "file": "data/loaders.py",
-      "detail": "line 34:F841 local variable 'transform' is assigned to but never used"
+      "file": "data_loader.py",
+      "detail": "line 3:F401 'torch' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "evaluate.py",
+      "detail": "line 5:F401 'os' imported but unused"
     },
     {
       "category": "lint_violation",
       "file": "main.py",
-      "detail": "line 4:F401 'data.loaders.normalize_images' imported but unused"
+      "detail": "line 7:F401 'model.validate_model' imported but unused"
     },
     {
       "category": "lint_violation",
-      "file": "main.py",
-      "detail": "line 6:F401 'models.tiny_conv_net.validate_model' imported but unused"
+      "file": "model.py",
+      "detail": "line 5:F401 'os' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "model.py",
+      "detail": "line 85:F841 local variable 'batch_size' is assigned to but never used"
+    },
+    {
+      "category": "lint_violation",
+      "file": "model.py",
+      "detail": "line 102:F821 undefined name 'train_loader'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "model.py",
+      "detail": "line 102:F821 undefined name 'val_loader'"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 1:F401 'os' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 2:F401 'time' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 4:F401 'torch.nn' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 6:F401 'torch.utils.data.DataLoader' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 7:F401 'torch.utils.tensorboard.SummaryWriter' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 8:F401 'model.train_model' imported but unused"
+    },
+    {
+      "category": "lint_violation",
+      "file": "utils.py",
+      "detail": "line 8:F401 'model.validate_model' imported but unused"
+    },
+    {
+      "category": "semantic_issue",
+      "file": "model.py",
+      "detail": "[critical] The 'TinyConvNet' class constructor expects an 'input_shape' argument, but it is not provided when the model is instantiated in 'main.py'. This will raise a TypeError when trying to create an instance of 'TinyConvNet'."
+    },
+    {
+      "category": "semantic_issue",
+      "file": "train.py",
+      "detail": "[critical] The 'train' function in 'train.py' does not handle the case where 'train_loader' is None. If 'train_loader' is not properly initialized or passed as None, it will raise a TypeError when trying to iterate over it."
     },
     {
       "category": "semantic_issue",
       "file": "main.py",
-      "detail": "[critical] The 'evaluate_model' function is called with an incorrect number of arguments. It expects two arguments (model and test_loader), but is called with five arguments (model, test_loader, accuracy, confusion_matrix, precision, recall, f1_score) on line 30."
+      "detail": "[critical] The 'train_model' function is called with 'None' as the second argument (val_loader) in 'main.py', which will lead to a TypeError when trying to iterate over 'val_loader'."
     },
     {
       "category": "semantic_issue",
-      "file": "models/tiny_conv_net.py",
-      "detail": "[critical] The 'train_model' function is defined with a 'val_loader' parameter, but it is not passed when called in 'main.py'. This will lead to a TypeError."
+      "file": "evaluate.py",
+      "detail": "[critical] The 'evaluate' function assumes that the 'test_loader' will always yield batches of data. If 'test_loader' is empty, it will raise an error when trying to access 'all_labels' and 'all_predictions'."
     }
   ]
 }

@@ -1,88 +1,63 @@
 {
   "execution_order": [
     {
-      "step_id": "s1",
-      "description": "Load configuration settings for the training pipeline.",
+      "step_id": "step1",
+      "description": "Load the dataset for training and evaluation.",
       "sequence_index": 0,
-      "source_reference": "Abstract",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s2",
-      "description": "Set random seed for reproducibility.",
-      "sequence_index": 1,
-      "source_reference": "Abstract",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [],
-      "consumes_variables": [],
-      "produces_variables": [],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s3",
-      "description": "Load the dataset of handwritten digits and normalize the images.",
-      "sequence_index": 2,
       "source_reference": "3. Dataset",
       "figure_ids": [],
-      "algorithm_ids": [
-        "m1"
-      ],
+      "algorithm_ids": [],
       "equation_ids": [],
-      "prerequisites": [
-        "s1",
-        "s2"
-      ],
+      "prerequisites": [],
       "consumes_variables": [
-        "Normalized training images",
-        "Labels"
+        "raw_images",
+        "raw_labels"
       ],
       "produces_variables": [
-        "Loaded dataset"
+        "normalized_images",
+        "labels"
       ],
       "trigger_conditions": []
     },
     {
-      "step_id": "s4",
+      "step_id": "step2",
       "description": "Initialize the TinyConvNet model architecture.",
-      "sequence_index": 3,
+      "sequence_index": 1,
       "source_reference": "2. Model Architecture",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
-      "prerequisites": [
-        "s3"
-      ],
+      "prerequisites": [],
       "consumes_variables": [],
       "produces_variables": [
-        "TinyConvNet model"
+        "model"
       ],
       "trigger_conditions": []
     },
     {
-      "step_id": "s5",
+      "step_id": "step3",
       "description": "Train the TinyConvNet model using the training dataset with cross-entropy loss and Adam optimizer.",
-      "sequence_index": 4,
+      "sequence_index": 2,
       "source_reference": "4. Training Procedure",
-      "figure_ids": [],
+      "figure_ids": [
+        "e1"
+      ],
       "algorithm_ids": [],
-      "equation_ids": [],
+      "equation_ids": [
+        "e1"
+      ],
       "prerequisites": [
-        "s4"
+        "normalized_images",
+        "labels",
+        "model"
       ],
       "consumes_variables": [
-        "Loaded dataset",
-        "TinyConvNet model"
+        "normalized_images",
+        "labels",
+        "model"
       ],
       "produces_variables": [
-        "Trained model"
+        "trained_model"
       ],
       "trigger_conditions": [
         "epochs=5",
@@ -90,122 +65,77 @@
       ]
     },
     {
-      "step_id": "s6",
-      "description": "Evaluate the trained model on the test dataset and calculate performance metrics.",
-      "sequence_index": 5,
+      "step_id": "step4",
+      "description": "Evaluate the trained TinyConvNet model on the test dataset.",
+      "sequence_index": 3,
       "source_reference": "5. Evaluation",
       "figure_ids": [],
       "algorithm_ids": [],
       "equation_ids": [],
       "prerequisites": [
-        "s5"
+        "trained_model"
       ],
       "consumes_variables": [
-        "Trained model"
+        "trained_model"
       ],
       "produces_variables": [
-        "Evaluation metrics"
-      ],
-      "trigger_conditions": []
-    },
-    {
-      "step_id": "s7",
-      "description": "Report the evaluation results including accuracy and confusion matrix.",
-      "sequence_index": 6,
-      "source_reference": "5. Evaluation",
-      "figure_ids": [],
-      "algorithm_ids": [],
-      "equation_ids": [],
-      "prerequisites": [
-        "s6"
-      ],
-      "consumes_variables": [
-        "Evaluation metrics"
-      ],
-      "produces_variables": [
-        "Report"
+        "evaluation_metrics"
       ],
       "trigger_conditions": []
     }
   ],
   "transitions": [
     {
-      "from_step": "s1",
-      "to_step": "s2",
+      "from_step": "step1",
+      "to_step": "step2",
       "condition": null,
-      "rationale": null
+      "rationale": "The model requires the dataset to be loaded before initialization."
     },
     {
-      "from_step": "s2",
-      "to_step": "s3",
+      "from_step": "step2",
+      "to_step": "step3",
       "condition": null,
-      "rationale": null
+      "rationale": "The model must be initialized before training."
     },
     {
-      "from_step": "s3",
-      "to_step": "s4",
+      "from_step": "step3",
+      "to_step": "step4",
       "condition": null,
-      "rationale": null
-    },
-    {
-      "from_step": "s4",
-      "to_step": "s5",
-      "condition": null,
-      "rationale": null
-    },
-    {
-      "from_step": "s5",
-      "to_step": "s6",
-      "condition": null,
-      "rationale": null
-    },
-    {
-      "from_step": "s6",
-      "to_step": "s7",
-      "condition": null,
-      "rationale": null
+      "rationale": "The model must be trained before evaluation."
     }
   ],
   "variable_dependencies": [
     {
-      "variable": "Loaded dataset",
+      "variable": "normalized_images",
       "depends_on": [
-        "Normalized training images",
-        "Labels"
+        "raw_images"
       ],
       "source_reference": "3. Dataset",
-      "rationale": null
+      "rationale": "Normalized images are derived from raw images."
     },
     {
-      "variable": "TinyConvNet model",
-      "depends_on": [],
-      "source_reference": "2. Model Architecture",
-      "rationale": null
-    },
-    {
-      "variable": "Trained model",
+      "variable": "labels",
       "depends_on": [
-        "Loaded dataset",
-        "TinyConvNet model"
+        "raw_labels"
+      ],
+      "source_reference": "3. Dataset",
+      "rationale": "Labels are directly taken from the raw labels."
+    },
+    {
+      "variable": "trained_model",
+      "depends_on": [
+        "model"
       ],
       "source_reference": "4. Training Procedure",
-      "rationale": null
+      "rationale": "The trained model is the output of the training process."
     },
     {
-      "variable": "Evaluation metrics",
+      "variable": "evaluation_metrics",
       "depends_on": [
-        "Trained model"
+        "trained_model"
       ],
       "source_reference": "5. Evaluation",
-      "rationale": null
-    },
-    {
-      "variable": "Report",
-      "depends_on": [
-        "Evaluation metrics"
-      ],
-      "source_reference": "5. Evaluation",
-      "rationale": null
+      "rationale": "Evaluation metrics are computed based on the trained model."
     }
   ]
 }

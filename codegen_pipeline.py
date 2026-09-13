@@ -13,7 +13,7 @@ from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, List, Optional, TypedDict
+from typing import Any, Dict, List, Optional, Tuple, TypedDict
 
 from langchain_core.output_parsers import StrOutputParser
 from langchain_core.prompts import ChatPromptTemplate
@@ -1651,6 +1651,189 @@ def assign_file_owners(files: List[Dict[str, Any]], paper_type: str, entry_point
     return owners
 
 
+CONFLICT_FIX_PROMPT = (
+    "You previously wrote the file `{file_path}` as part of a generated PyTorch repository. "
+    "A deterministic consistency check found that this file defines `{symbol_name}`, which is "
+    "ALSO already defined elsewhere in this repository, in `{other_file}`, with this real "
+    "signature:\n  {other_signature}\n\n"
+    "That other definition is the canonical one for `{symbol_name}`. Rewrite `{file_path}` so it "
+    "does NOT redefine `{symbol_name}` — import it from `{other_module}` instead if this file "
+    "actually needs to use it, or simply remove that responsibility from this file if it doesn't "
+    "belong here. Keep everything else in the file the same.\n\n"
+    "Current content of `{file_path}`:\n```python\n{current_code}\n```\n\n"
+    "File plan:\n{file_plan}\n\n"
+    "Return ONLY the complete corrected file content, without markdown fences."
+)
+
+
+class SymbolConsistencyAgent:
+    """Deterministic (AST-based, no LLM) cross-file symbol-collision check,
+    with one targeted regeneration per conflicting file.
+
+    This is the concrete fix for the sibling-file duplicate-definition bug
+    (see git history): when DatasetAgent/ExecutionAgent/EvaluationAgent are
+    each assigned multiple files, they generate every file independently
+    with no visibility into what siblings already defined. Two files ended
+    up each inventing their own `train_model` with incompatible parameter
+    lists — a real, reproduced-across-samples runtime bug that neither
+    static analysis nor the code-review LLM reliably caught, because a
+    second, differently-shaped definition is just as "valid-looking" as
+    the first.
+
+    Deliberately AST-based rather than another LLM judgment call for
+    *detection*: whether two functions share a name is a fact, not an
+    opinion, and checking it costs nothing. Only the *fix* (deciding which
+    file should stop defining the symbol, and rewriting it) uses an LLM.
+    Runs after Dataset/Execution/Evaluation, before EntryPointAgent — so by
+    the time the entry point extracts "real" signatures, conflicts are
+    already resolved rather than baked into its ground truth.
+    """
+
+    def __init__(self, config: "CodeWriterConfig"):
+        self.config = config
+        self.llm = ChatOpenAI(model=config.model_name, temperature=config.temperature)
+        prompt = ChatPromptTemplate.from_template(CONFLICT_FIX_PROMPT)
+        self.chain = prompt | self.llm | StrOutputParser()
+
+    @staticmethod
+    def _collect_symbols(output_dir: Path, file_paths: List[str]) -> Dict[str, List[Tuple[str, str, str]]]:
+        """name -> [(module, signature, absolute_path), ...] in generation
+        order, so entries[0] is treated as the canonical (first-written)
+        definition when a conflict is found."""
+        symbols: Dict[str, List[Tuple[str, str, str]]] = {}
+        seen_paths: set = set()
+        for file_path in file_paths:
+            if file_path in seen_paths:
+                continue
+            seen_paths.add(file_path)
+
+            path = Path(file_path)
+            if not path.exists() or path.suffix != ".py":
+                continue
+            try:
+                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+            except SyntaxError:
+                continue
+            try:
+                module = str(path.relative_to(output_dir).with_suffix("")).replace(os.sep, ".")
+            except ValueError:
+                module = path.stem
+
+            for node in tree.body:
+                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                    sig = f"def {node.name}({', '.join(a.arg for a in node.args.args)})"
+                    symbols.setdefault(node.name, []).append((module, sig, str(path)))
+        return symbols
+
+    @staticmethod
+    def _conflicting(entries: List[Tuple[str, str, str]]) -> bool:
+        # Same name, different parameter lists across files == a real
+        # conflict (a caller can only be compatible with one of them).
+        # Same name with an IDENTICAL signature in two files is redundant
+        # but not a correctness bug, so it's left alone here.
+        return len({sig for _, sig, _ in entries}) > 1
+
+    @staticmethod
+    def _arg_count(signature: str) -> int:
+        inside = signature[signature.index("(") + 1: signature.rindex(")")]
+        return len([p for p in inside.split(",") if p.strip()])
+
+    @staticmethod
+    def _call_sites_plausible(code: str, symbol_name: str, expected_arg_count: int) -> bool:
+        """Best-effort deterministic check that a fix which now calls the
+        canonical function actually passes it a plausible number of
+        arguments — catching a fix that resolves the duplicate-definition
+        problem but introduces a "wrong argument count" problem in its
+        place (observed in practice: a generated wrapper called the
+        canonical function with 5 args when it takes 7)."""
+        try:
+            tree = ast.parse(code)
+        except SyntaxError:
+            return True  # a separate syntax check already covers this
+        for node in ast.walk(tree):
+            if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id == symbol_name:
+                has_star_args = any(isinstance(a, ast.Starred) for a in node.args)
+                has_star_kwargs = any(kw.arg is None for kw in node.keywords)
+                if has_star_args or has_star_kwargs:
+                    continue  # can't statically count these; don't false-flag
+                total_args = len(node.args) + len(node.keywords)
+                if total_args < expected_arg_count:
+                    return False
+        return True
+
+    def run(self, state: CodegenState) -> CodegenState:
+        file_paths = (
+            list(state.get("dataset_files", []))
+            + list(state.get("execution_files", []))
+            + list(state.get("evaluation_files", []))
+        )
+        symbols = self._collect_symbols(self.config.output_dir, file_paths)
+        plan = state.get("plan", {})
+        file_spec_map = {f.get("path"): f for f in plan.get("files", [])}
+
+        fixed: List[Dict[str, str]] = []
+        for name, entries in symbols.items():
+            if len(entries) < 2 or not self._conflicting(entries):
+                continue
+
+            canonical_module, canonical_sig, canonical_path = entries[0]
+            for module, sig, path_str in entries[1:]:
+                if sig == canonical_sig:
+                    continue  # this particular pair actually agrees; a different pair doesn't
+                logger.warning(
+                    "SymbolConsistencyAgent: '%s' defined in both %s (%s) and %s (%s); "
+                    "regenerating the latter to defer to the former.",
+                    name, canonical_module, canonical_sig, module, sig,
+                )
+                path = Path(path_str)
+                try:
+                    rel_path = str(path.relative_to(self.config.output_dir))
+                except ValueError:
+                    rel_path = path_str
+                file_spec = file_spec_map.get(rel_path, {})
+
+                try:
+                    fix_input = {
+                        "file_path": rel_path,
+                        "symbol_name": name,
+                        "other_file": canonical_path,
+                        "other_signature": canonical_sig,
+                        "other_module": canonical_module,
+                        "current_code": path.read_text(encoding="utf-8"),
+                        "file_plan": json.dumps(file_spec, ensure_ascii=False, indent=2),
+                    }
+                    fixed_code = strip_fences(self.chain.invoke(fix_input))
+                    expected_args = self._arg_count(canonical_sig)
+
+                    if not self._call_sites_plausible(fixed_code, name, expected_args):
+                        # The fix removed the duplicate definition but calls
+                        # the canonical one with too few arguments — one
+                        # targeted retry with that made explicit, rather
+                        # than silently shipping a new bug in place of the
+                        # old one.
+                        logger.warning(
+                            "SymbolConsistencyAgent: fix for %s calls '%s' with too few arguments "
+                            "(needs %d per %s); retrying once.", rel_path, name, expected_args, canonical_sig,
+                        )
+                        retry_input = dict(fix_input)
+                        retry_input["current_code"] = (
+                            fixed_code + f"\n\n# NOTE: the above calls '{name}' with fewer than the "
+                            f"{expected_args} argument(s) its real signature `{canonical_sig}` "
+                            "requires. Fix the call to match that signature exactly."
+                        )
+                        fixed_code = strip_fences(self.chain.invoke(retry_input))
+
+                    path.write_text(fixed_code, encoding="utf-8")
+                    fixed.append({"symbol": name, "file": rel_path, "deferred_to": canonical_path})
+                except Exception as e:
+                    logger.error("SymbolConsistencyAgent failed to fix %s: %s", rel_path, e)
+
+        state["symbol_conflicts_fixed"] = fixed
+        if fixed:
+            logger.info(f"SymbolConsistencyAgent resolved {len(fixed)} cross-file symbol conflict(s)")
+        return state
+
+
 ENTRY_POINT_PROMPT = (
     "You are writing the top-level entry point `{file_path}` that orchestrates an "
     "already-generated PyTorch repository. Below are the ACTUAL functions/classes that "
@@ -2737,6 +2920,14 @@ def main(argv: List[str] | None = None) -> CodegenState:
         logger.info("Stage 5c: Generating evaluation files...")
         evaluation_agent = EvaluationAgent(writer_config)
         state = traced(evaluation_agent, "evaluation_agent")
+
+        # Deterministically check for the same symbol defined incompatibly
+        # across sibling files (e.g. two different train_model()s), and fix
+        # any found, BEFORE the entry point treats the current files as
+        # ground truth for what really exists.
+        logger.info("Stage 5c.5: Checking cross-file symbol consistency...")
+        symbol_checker = SymbolConsistencyAgent(writer_config)
+        state = traced(symbol_checker, "symbol_consistency")
 
         # Write the entry point LAST, from the real signatures of everything
         # generated above, instead of guessing at them independently.

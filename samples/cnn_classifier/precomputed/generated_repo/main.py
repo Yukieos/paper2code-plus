@@ -1,19 +1,19 @@
 import json
-import torch
 import logging
-from data.loaders import load_data, normalize_images
-from evaluation.evaluate import evaluate_model
-from models.tiny_conv_net import TinyConvNet, train_model, validate_model
-from utils.report import report_results
+import argparse
+import torch
 
-def setup_logging():
-    logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
-    return logging.getLogger(__name__)
+from data_loader import load_data
+from model import TinyConvNet, train_model, validate_model
+from evaluate import evaluate
+from utils import initialize_optimizer, set_seed
 
-def main(config_path: str = "config.json", seed: int = 42) -> None:
-    """Main entry point for the TinyConvNet application. Loads configuration, sets seed, and orchestrates the training and evaluation process."""
+def main(config_path: str, seed: int) -> None:
+    """Main entry point for the TinyConvNet application. Loads configuration, sets seed, prepares data, trains the model, and evaluates it."""
     
-    logger = setup_logging()
+    # Initialize logging
+    logging.basicConfig(filename='app.log', level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+    logger = logging.getLogger(__name__)
 
     # Load configuration from config_path
     try:
@@ -23,42 +23,44 @@ def main(config_path: str = "config.json", seed: int = 42) -> None:
         logger.error(f"Configuration file not found: {config_path}")
         return
     except json.JSONDecodeError:
-        logger.error(f"Configuration file is malformed: {config_path}")
+        logger.error(f"Error decoding JSON from the configuration file: {config_path}")
         return
 
     # Set random seed for reproducibility
-    torch.manual_seed(seed)
+    set_seed(seed)
 
-    # Load dataset and create data loaders
+    # Prepare the dataset
     batch_size = config['global']['batch_size']['value']
     train_loader, test_loader = load_data(batch_size)
 
-    if len(train_loader) == 0 or len(test_loader) == 0:
-        logger.error("Loaded dataset is empty. Please check the data source.")
-        raise ValueError("Loaded dataset is empty.")
+    # Initialize the TinyConvNet model
+    model = TinyConvNet()
 
-    # Initialize TinyConvNet model
-    try:
-        model = TinyConvNet()
-    except RuntimeError as e:
-        logger.error(f"Error initializing the model: {e}")
-        return
-
-    optimizer = torch.optim.Adam(model.parameters(), lr=config['global']['learning_rate']['value'])
+    # Initialize optimizer and criterion
+    learning_rate = config['global']['learning_rate']['value']
+    optimizer = initialize_optimizer(model, learning_rate)
     criterion = torch.nn.CrossEntropyLoss()
 
-    # Train the model
+    # Train the model using training data
     num_epochs = config['global']['epochs']['value']
-    logger.info("Starting training...")
-    train_model(model, train_loader, optimizer, criterion, num_epochs, device='cpu', save_path=None, log_interval=10)
+    for epoch in range(num_epochs):
+        train_loss = train_model(model, train_loader, None, criterion, optimizer, 1, 'cpu', None)
+        logger.info(f"Epoch [{epoch+1}/{num_epochs}], Loss: {train_loss:.4f}")
 
-    # Evaluate the model
-    logger.info("Evaluating the model...")
-    accuracy, confusion_matrix, precision, recall, f1_score = evaluate_model(model, test_loader)
+    # Evaluate the model on test data
+    test_accuracy = evaluate(model, test_loader)
+    logger.info(f"Test Accuracy: {test_accuracy:.2f}%")
 
-    # Report the results
-    logger.info("Reporting results...")
-    report_results(accuracy, confusion_matrix, precision, recall, f1_score)
+    # Check if the model meets the acceptance criteria
+    if test_accuracy < 98.0:
+        logger.error("Model did not achieve the required accuracy of 98% on the test dataset.")
+    else:
+        logger.info("Model achieved the required accuracy on the test dataset.")
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(description='TinyConvNet Training and Evaluation')
+    parser.add_argument('--config_path', type=str, default='config.json', help='Path to the configuration file.')
+    parser.add_argument('--seed', type=int, default=42, help='Random seed for reproducibility.')
+    args = parser.parse_args()
+    
+    main(config_path=args.config_path, seed=args.seed)

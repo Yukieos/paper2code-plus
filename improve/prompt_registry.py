@@ -64,6 +64,9 @@ PROMPT_REGISTRY: dict[str, list[PromptRef]] = {
     "evaluation_agent": [
         PromptRef("evaluation_agent", "codegen_pipeline.py", "EVALUATION_PROMPT"),
     ],
+    "symbol_consistency": [
+        PromptRef("symbol_consistency", "codegen_pipeline.py", "CONFLICT_FIX_PROMPT"),
+    ],
     "entry_point_agent": [
         PromptRef("entry_point_agent", "codegen_pipeline.py", "ENTRY_POINT_PROMPT"),
     ],

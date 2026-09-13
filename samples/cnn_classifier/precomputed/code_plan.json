@@ -5,7 +5,9 @@
     "torch",
     "torchvision",
     "numpy",
-    "matplotlib"
+    "matplotlib",
+    "logging",
+    "sklearn"
   ],
   "parameters": [
     {
@@ -40,22 +42,12 @@
     },
     {
       "name": "seed",
-      "context": "Used for setting random seed for reproducibility of results.",
+      "context": null,
       "defined_in_paper": false,
       "value": null,
-      "suggested_values": "Any integer",
-      "reason": "For reproducibility of results.",
+      "suggested_values": "Any integer value",
+      "reason": "To ensure reproducibility of results.",
       "default_value": 42,
-      "risk_level": "medium"
-    },
-    {
-      "name": "config_path",
-      "context": "Path to the configuration file containing model parameters and training settings.",
-      "defined_in_paper": false,
-      "value": null,
-      "suggested_values": "",
-      "reason": "Path to the configuration file.",
-      "default_value": "config.json",
       "risk_level": "medium"
     }
   ],
@@ -68,12 +60,13 @@
         "Define main function",
         "Load configuration",
         "Set random seed",
-        "Load dataset",
-        "Prepare data loaders",
+        "Prepare dataset",
         "Initialize model",
         "Train model",
         "Evaluate model",
-        "Report results"
+        "Report results",
+        "Handle errors gracefully",
+        "Implement logging"
       ],
       "key_functions": [
         "main"
@@ -82,15 +75,17 @@
         {
           "name": "main",
           "signature": "def main(config_path: str, seed: int) -> None:",
-          "docstring": "Main entry point for the TinyConvNet application. Loads configuration, sets seed, and orchestrates the training and evaluation process.",
+          "docstring": "Main entry point for the TinyConvNet application. Loads configuration, sets seed, prepares data, trains the model, and evaluates it.",
           "core_steps": [
             "Load configuration from config_path",
             "Set random seed for reproducibility",
-            "Load dataset and create data loaders",
-            "Initialize TinyConvNet model",
-            "Train the model",
-            "Evaluate the model",
-            "Report the results"
+            "Prepare the dataset using data loaders",
+            "Initialize the TinyConvNet model",
+            "Train the model using training data",
+            "Evaluate the model on test data",
+            "Report the evaluation results",
+            "Handle potential errors during execution",
+            "Log key metrics and losses during training and evaluation"
           ],
           "key_variables": [
             {
@@ -99,23 +94,18 @@
               "purpose": "Configuration parameters for the model and training."
             },
             {
-              "name": "seed",
-              "type": "int",
-              "purpose": "Random seed for reproducibility."
-            },
-            {
               "name": "train_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for training data."
+              "purpose": "DataLoader for training data."
             },
             {
               "name": "test_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for testing data."
+              "purpose": "DataLoader for test data."
             },
             {
               "name": "model",
-              "type": "TinyConvNet",
+              "type": "nn.Module",
               "purpose": "The TinyConvNet model instance."
             },
             {
@@ -131,21 +121,23 @@
             {
               "name": "logger",
               "type": "Logger",
-              "purpose": "Logger for tracking training and evaluation progress."
+              "purpose": "Logger for tracking training and evaluation metrics."
             }
           ],
           "dependencies": [
-            "load_config",
-            "set_seed",
-            "load_data",
-            "train_model",
-            "evaluate_model",
-            "report_results",
-            "setup_logging"
+            "torch",
+            "torchvision",
+            "data_loader",
+            "model",
+            "train",
+            "evaluate",
+            "logging"
           ],
           "source_alignment": [
             "Abstract",
-            "4. Training Procedure"
+            "2. Model Architecture",
+            "4. Training Procedure",
+            "5. Evaluation"
           ]
         }
       ],
@@ -153,7 +145,7 @@
       "requires_parameters": [
         {
           "name": "config_path",
-          "context": "Path to the configuration file containing model parameters and training settings.",
+          "context": null,
           "defined_in_paper": false,
           "value": null,
           "suggested_values": "",
@@ -163,19 +155,19 @@
         },
         {
           "name": "seed",
-          "context": "Used for setting random seed for reproducibility of results.",
+          "context": null,
           "defined_in_paper": false,
           "value": null,
-          "suggested_values": "Any integer",
-          "reason": "For reproducibility of results.",
+          "suggested_values": "Any integer value",
+          "reason": "To ensure reproducibility of results.",
           "default_value": 42,
           "risk_level": "medium"
         }
       ],
       "acceptance_criteria": [
         "The script runs without errors when provided with a valid config file and seed.",
-        "The model achieves at least 98% accuracy on the test dataset, with precision, recall, and F1 score reported.",
-        "Error handling is implemented for invalid inputs and empty datasets."
+        "The model achieves at least 98% accuracy on the test dataset using the MNIST dataset under standard conditions.",
+        "The training process logs key metrics such as loss and accuracy for each epoch."
       ]
     },
     {
@@ -192,72 +184,59 @@
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "The config file is valid JSON and can be loaded without errors.",
-        "The parameters in the config file match the expected types."
+        "The configuration file is valid JSON.",
+        "The parameters can be loaded correctly by the main script."
       ]
     },
     {
-      "path": "data/loaders.py",
-      "purpose": "Data loading and preprocessing functions for the dataset.",
+      "path": "data_loader.py",
+      "purpose": "Handles loading and preprocessing of the dataset.",
       "content_outline": [
-        "Define data loading functions",
-        "Define preprocessing functions",
-        "Implement error handling for data loading"
+        "Import necessary libraries",
+        "Define dataset class",
+        "Implement data loading functions",
+        "Handle edge cases in data preprocessing"
       ],
       "key_functions": [
-        "load_data",
-        "normalize_images"
+        "load_data"
       ],
       "function_skeletons": [
         {
           "name": "load_data",
           "signature": "def load_data(batch_size: int) -> Tuple[DataLoader, DataLoader]:",
-          "docstring": "Loads the handwritten digit dataset and returns data loaders for training and testing, including error handling for empty datasets.",
+          "docstring": "Loads the handwritten digit dataset and returns train and test DataLoaders, handling edge cases.",
           "core_steps": [
             "Download the dataset if not already present",
-            "Check for empty dataset and raise an error if necessary",
-            "Apply normalization and transformations",
-            "Create DataLoader instances for training and testing"
+            "Transform the images to tensors and normalize",
+            "Handle missing values and outliers in the dataset",
+            "Create DataLoader for training and testing sets"
           ],
           "key_variables": [
             {
+              "name": "train_dataset",
+              "type": "Dataset",
+              "purpose": "Dataset for training."
+            },
+            {
+              "name": "test_dataset",
+              "type": "Dataset",
+              "purpose": "Dataset for testing."
+            },
+            {
               "name": "train_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for training data."
+              "purpose": "DataLoader for training data."
             },
             {
               "name": "test_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for testing data."
-            },
-            {
-              "name": "dataset",
-              "type": "Dataset",
-              "purpose": "The dataset containing the images and labels."
+              "purpose": "DataLoader for test data."
             }
           ],
           "dependencies": [
-            "normalize_images"
+            "torch",
+            "torchvision"
           ],
-          "source_alignment": [
-            "3. Dataset"
-          ]
-        },
-        {
-          "name": "normalize_images",
-          "signature": "def normalize_images(images: np.ndarray) -> np.ndarray:",
-          "docstring": "Normalizes the pixel values of the images to the range [0, 1].",
-          "core_steps": [
-            "Divide pixel values by 255 to normalize to [0, 1]"
-          ],
-          "key_variables": [
-            {
-              "name": "images",
-              "type": "np.ndarray",
-              "purpose": "Raw grayscale images."
-            }
-          ],
-          "dependencies": [],
           "source_alignment": [
             "3. Dataset"
           ]
@@ -277,15 +256,15 @@
         }
       ],
       "acceptance_criteria": [
-        "Data loaders return the correct number of batches based on the batch size.",
-        "Images are normalized correctly."
+        "Data loaders return the correct number of batches based on the dataset size and batch size."
       ]
     },
     {
-      "path": "models/tiny_conv_net.py",
-      "purpose": "Definition of the TinyConvNet model architecture.",
+      "path": "model.py",
+      "purpose": "Defines the TinyConvNet architecture.",
       "content_outline": [
-        "Define the TinyConvNet class",
+        "Import necessary libraries",
+        "Define TinyConvNet class",
         "Implement forward pass"
       ],
       "key_functions": [
@@ -304,21 +283,24 @@
           "key_variables": [
             {
               "name": "conv1",
-              "type": "nn.Conv2d",
+              "type": "Conv2d",
               "purpose": "First convolutional layer."
             },
             {
               "name": "conv2",
-              "type": "nn.Conv2d",
+              "type": "Conv2d",
               "purpose": "Second convolutional layer."
             },
             {
               "name": "fc",
-              "type": "nn.Linear",
-              "purpose": "Fully connected layer for output."
+              "type": "Linear",
+              "purpose": "Fully connected layer."
             }
           ],
-          "dependencies": [],
+          "dependencies": [
+            "torch",
+            "torch.nn"
+          ],
           "source_alignment": [
             "2. Model Architecture"
           ]
@@ -328,32 +310,33 @@
       "requires_parameters": [],
       "acceptance_criteria": [
         "The model can be instantiated without errors.",
-        "The forward pass returns the correct shape of logits."
+        "The forward pass returns the correct shape of logits for 10 classes."
       ]
     },
     {
-      "path": "training/train.py",
-      "purpose": "Training loop for the TinyConvNet model.",
+      "path": "train.py",
+      "purpose": "Contains training logic for the model.",
       "content_outline": [
+        "Import necessary libraries",
         "Define training function",
-        "Implement training loop",
-        "Add error handling for training process"
+        "Implement error handling",
+        "Add logging for training metrics"
       ],
       "key_functions": [
-        "train_model"
+        "train"
       ],
       "function_skeletons": [
         {
-          "name": "train_model",
-          "signature": "def train_model(model: nn.Module, train_loader: DataLoader, optimizer: Optimizer, criterion: Loss, epochs: int) -> None:",
-          "docstring": "Trains the TinyConvNet model using the provided data loader, optimizer, and loss function, with error handling for training process.",
+          "name": "train",
+          "signature": "def train(model: nn.Module, train_loader: DataLoader, optimizer: Optimizer, criterion: Loss, epochs: int) -> None:",
+          "docstring": "Trains the TinyConvNet model on the training dataset, with error handling and logging.",
           "core_steps": [
             "Set model to training mode",
             "Iterate over epochs",
             "Iterate over batches in train_loader",
-            "Compute loss and gradients",
+            "Compute loss and backpropagate",
             "Update model parameters",
-            "Log training progress"
+            "Log training metrics and losses"
           ],
           "key_variables": [
             {
@@ -364,7 +347,7 @@
             {
               "name": "train_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for training data."
+              "purpose": "DataLoader for training data."
             },
             {
               "name": "optimizer",
@@ -379,10 +362,14 @@
             {
               "name": "logger",
               "type": "Logger",
-              "purpose": "Logger for tracking training progress."
+              "purpose": "Logger for tracking training metrics."
             }
           ],
-          "dependencies": [],
+          "dependencies": [
+            "torch",
+            "torch.optim",
+            "logging"
+          ],
           "source_alignment": [
             "4. Training Procedure"
           ]
@@ -407,27 +394,28 @@
       ]
     },
     {
-      "path": "evaluation/evaluate.py",
-      "purpose": "Evaluation functions for the TinyConvNet model.",
+      "path": "evaluate.py",
+      "purpose": "Contains evaluation logic for the model.",
       "content_outline": [
+        "Import necessary libraries",
         "Define evaluation function",
-        "Implement accuracy calculation",
-        "Add error handling for evaluation process"
+        "Implement error handling",
+        "Add logging for evaluation metrics"
       ],
       "key_functions": [
-        "evaluate_model"
+        "evaluate"
       ],
       "function_skeletons": [
         {
-          "name": "evaluate_model",
-          "signature": "def evaluate_model(model: nn.Module, test_loader: DataLoader) -> Tuple[float, np.ndarray]:",
-          "docstring": "Evaluates the TinyConvNet model on the test dataset and returns accuracy and confusion matrix, with error handling for evaluation process.",
+          "name": "evaluate",
+          "signature": "def evaluate(model: nn.Module, test_loader: DataLoader) -> Tuple[float, np.ndarray]:",
+          "docstring": "Evaluates the TinyConvNet model on the test dataset and returns accuracy and confusion matrix, with error handling and logging.",
           "core_steps": [
             "Set model to evaluation mode",
-            "Iterate over test_loader",
-            "Collect predictions and true labels",
+            "Iterate over batches in test_loader",
+            "Compute predictions",
             "Calculate accuracy and confusion matrix",
-            "Log evaluation results"
+            "Log evaluation metrics"
           ],
           "key_variables": [
             {
@@ -438,25 +426,34 @@
             {
               "name": "test_loader",
               "type": "DataLoader",
-              "purpose": "Data loader for testing data."
+              "purpose": "DataLoader for test data."
+            },
+            {
+              "name": "predictions",
+              "type": "np.ndarray",
+              "purpose": "Model predictions."
             },
             {
               "name": "accuracy",
               "type": "float",
-              "purpose": "Accuracy of the model on the test dataset."
+              "purpose": "Accuracy of the model on test data."
             },
             {
               "name": "confusion_matrix",
               "type": "np.ndarray",
-              "purpose": "Confusion matrix for the model's predictions."
+              "purpose": "Confusion matrix for the predictions."
             },
             {
               "name": "logger",
               "type": "Logger",
-              "purpose": "Logger for tracking evaluation progress."
+              "purpose": "Logger for tracking evaluation metrics."
             }
           ],
-          "dependencies": [],
+          "dependencies": [
+            "torch",
+            "sklearn.metrics",
+            "logging"
+          ],
           "source_alignment": [
             "5. Evaluation"
           ]
@@ -466,62 +463,48 @@
       "requires_parameters": [],
       "acceptance_criteria": [
         "The evaluation function runs without errors.",
-        "The accuracy is calculated correctly."
+        "The function returns accuracy and a confusion matrix."
       ]
     },
     {
-      "path": "utils/report.py",
-      "purpose": "Utility functions for reporting results.",
+      "path": "utils.py",
+      "purpose": "Utility functions for the project.",
       "content_outline": [
-        "Define reporting functions"
+        "Import necessary libraries",
+        "Define utility functions"
       ],
-      "key_functions": [
-        "report_results"
-      ],
-      "function_skeletons": [
-        {
-          "name": "report_results",
-          "signature": "def report_results(accuracy: float, confusion_matrix: np.ndarray) -> None:",
-          "docstring": "Reports the evaluation results including accuracy and confusion matrix.",
-          "core_steps": [
-            "Print accuracy",
-            "Print confusion matrix"
-          ],
-          "key_variables": [
-            {
-              "name": "accuracy",
-              "type": "float",
-              "purpose": "Accuracy of the model."
-            },
-            {
-              "name": "confusion_matrix",
-              "type": "np.ndarray",
-              "purpose": "Confusion matrix for the model's predictions."
-            }
-          ],
-          "dependencies": [],
-          "source_alignment": [
-            "5. Evaluation"
-          ]
-        }
-      ],
+      "key_functions": [],
+      "function_skeletons": [],
       "dependencies": [],
       "requires_parameters": [],
       "acceptance_criteria": [
-        "Results are printed in a readable format."
+        "Utility functions can be imported without errors."
       ]
     }
   ],
   "tests": [
     {
       "path": "tests/test_model.py",
-      "purpose": "Unit tests for the TinyConvNet model and training functions.",
+      "purpose": "Unit tests for the model architecture.",
       "test_functions": [
         "test_model_initialization",
-        "test_training_loop",
-        "test_evaluation",
-        "test_data_loading",
-        "test_logging"
+        "test_forward_pass"
+      ]
+    },
+    {
+      "path": "tests/test_train.py",
+      "purpose": "Unit tests for the training logic.",
+      "test_functions": [
+        "test_training_process",
+        "test_training_logging"
+      ]
+    },
+    {
+      "path": "tests/test_evaluate.py",
+      "purpose": "Unit tests for the evaluation logic.",
+      "test_functions": [
+        "test_evaluation_process",
+        "test_evaluation_logging"
       ]
     }
   ],

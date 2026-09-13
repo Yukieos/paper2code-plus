@@ -46,7 +46,16 @@ Each UI run is isolated under `runs/<timestamp>/` so it never touches the sample
 - **Structurer**: normalize types, ids, metrics, contextual arrays; writes `UPS-IR.json`.
 - **Verifier**: schema + cross-reference check (accepts ids and source references across all entities).
 - **Synthesizer**: split UPS-IR into `UPS-IR_Output/<section>.json`.
-- **Codegen (multi-agent)**: `codegen_pipeline.py` classifies the paper type, plans a repository, generates code via specialized agents (Dataset/Execution/Evaluation), then runs integration + static checks to produce `generated_repo/`.
+- **Codegen (multi-agent)**: `codegen_pipeline.py` classifies the paper type, plans a repository, generates code via specialized agents (Dataset/Execution/Evaluation), checks cross-file symbol consistency, writes the entry point last from real signatures, then runs integration + static checks to produce `generated_repo/`.
+
+## ReAct-Style Control Flow
+
+Most of the pipeline is still a fixed sequence — extraction has to precede planning, planning has to precede code — but two points aren't hard-coded "finish and move on" anymore; an agent's own output decides what happens next:
+
+- **Extraction backtrack** (`main.py`): if `VerifierAgent` rejects the UPS-IR (a schema or cross-reference violation), the pipeline doesn't just halt — it backtracks to `ExtractorAgent` with the verifier's specific error as feedback (`agents/extractor.py`'s `VERIFIER_FEEDBACK_RETRY_TEMPLATE`) and re-runs structure+verify, up to `MAX_VERIFICATION_RETRIES` (2) times. Implemented both ways: `run_sequential()` as an index-jumping loop, `run_via_graph()` (`--use-graph`) as a real LangGraph conditional edge/cycle — the more idiomatic version if you're extending this further.
+- **Cross-file symbol consistency** (`codegen_pipeline.py`'s `SymbolConsistencyAgent`, Stage 5c.5): the concrete fix for a real, reproduced bug — `DatasetAgent`/`ExecutionAgent`/`EvaluationAgent` generate each assigned file independently, with no visibility into what a sibling file already defined, so two files could each invent their own `train_model` with incompatible signatures. This is deliberately **not** another LLM judgment call for *detection* — an AST walk deterministically finds same-name-different-signature collisions across all just-generated files (free, no hallucination risk) — and only the *fix* (rewriting the losing file to import the canonical definition instead) calls an LLM, with one more deterministic check-and-retry if the fix's own call site doesn't pass the canonical function enough arguments. Runs before `EntryPointAgent`, so the entry point's "real signatures" are already conflict-free by the time it reads them.
+
+Deliberately out of scope for now (see `eval/mine_failures.py`'s clustering and `improve/` instead for the broader "detect recurring patterns and evolve prompts over time" story): a general planner-in-the-loop that can re-plan mid-generation, and giving every one of the ~15 stages its own continue/retry/backtrack decision. Two concrete, verified wins over rewriting the whole thing into a graph.
 
 ## Evaluation & Failure-Mining Framework (`eval/`)
 

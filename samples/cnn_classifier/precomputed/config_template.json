@@ -19,36 +19,14 @@
       "risk": "low",
       "defined_in_paper": true
     },
-    "config_path": {
-      "value": null,
-      "description": "Path to the configuration file.",
-      "risk": "medium",
-      "defined_in_paper": false
-    },
     "seed": {
       "value": null,
-      "description": "For reproducibility of results.",
+      "description": "To ensure reproducibility of results.",
       "risk": "medium",
       "defined_in_paper": false
     }
   },
   "modules": {
-    "Used for setting random seed for reproducibility of results.": {
-      "seed": {
-        "value": null,
-        "description": "For reproducibility of results.",
-        "risk": "medium",
-        "defined_in_paper": false
-      }
-    },
-    "Path to the configuration file containing model parameters and training settings.": {
-      "config_path": {
-        "value": null,
-        "description": "Path to the configuration file.",
-        "risk": "medium",
-        "defined_in_paper": false
-      }
-    },
     "main.py": {
       "config_path": {
         "value": null,
@@ -58,12 +36,12 @@
       },
       "seed": {
         "value": null,
-        "description": "For reproducibility of results.",
+        "description": "To ensure reproducibility of results.",
         "risk": "medium",
         "defined_in_paper": false
       }
     },
-    "data/loaders.py": {
+    "data_loader.py": {
       "batch_size": {
         "value": 64,
         "description": "Batch size for data loading.",
@@ -71,7 +49,7 @@
         "defined_in_paper": true
       }
     },
-    "training/train.py": {
+    "train.py": {
       "epochs": {
         "value": 5,
         "description": "Number of epochs for training.",

@@ -105,6 +105,15 @@ PROMPT_TEMPLATE = (
     "Thesis content:\n\"\"\"\n{text}\n\"\"\""
 )
 
+VERIFIER_FEEDBACK_RETRY_TEMPLATE = (
+    "Your previous UPS-IR extraction from this paper was rejected by downstream schema/integrity "
+    "validation with this specific error:\n{verifier_error}\n\n"
+    "Re-extract the full UPS-IR from scratch, making sure this specific problem does not recur "
+    "(e.g. if a field name or reference was wrong, use the correct one this time). Follow the same "
+    "schema and instructions as before.\n\n"
+    "Thesis content:\n\"\"\"\n{text}\n\"\"\""
+)
+
 RETRY_PROMPT_TEMPLATE = (
     "The initial UPS-IR extraction missed or left empty the following sections: {missing_fields}. "
     "Quality concerns to address:\n"
@@ -151,13 +160,29 @@ class ExtractorAgent:
         self._chain = self.prompt | self.llm | StrOutputParser()
         self.retry_prompt = ChatPromptTemplate.from_template(RETRY_PROMPT_TEMPLATE)
         self._retry_chain = self.retry_prompt | self.llm | StrOutputParser()
+        self._verifier_feedback_prompt = ChatPromptTemplate.from_template(VERIFIER_FEEDBACK_RETRY_TEMPLATE)
+        self._verifier_feedback_chain = self._verifier_feedback_prompt | self.llm | StrOutputParser()
 
     def run(self, state: Optional[Dict[str, Any]] = None) -> Dict[str, Any]:
         if state is None or "text" not in state:
             raise ValueError("ExtractorAgent requires 'text' in the incoming state.")
 
         text_content = state["text"]
-        raw_response = self._chain.invoke({"text": text_content})
+
+        # ReAct backtrack: the orchestrator sends us back here (instead of
+        # just halting) when VerifierAgent rejected the UPS-IR we produced
+        # last time. Re-extract with that specific error as context rather
+        # than blindly repeating the same (temperature=0, so near-identical)
+        # extraction that already failed.
+        verifier_feedback = state.pop("verifier_feedback", None)
+        if verifier_feedback:
+            logger.info("ExtractorAgent re-extracting with verifier feedback: %s", verifier_feedback)
+            raw_response = self._verifier_feedback_chain.invoke({
+                "verifier_error": verifier_feedback,
+                "text": text_content,
+            })
+        else:
+            raw_response = self._chain.invoke({"text": text_content})
         logger.debug("ExtractorAgent raw response: %s", raw_response)
 
         info = self._try_parse_json(raw_response)
