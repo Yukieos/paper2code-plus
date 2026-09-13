@@ -61,12 +61,30 @@ Every agent step *can* be instrumented, shipped to S3 as a structured trace, and
    python -m eval.mine_failures                # every run in the bucket
    python -m eval.mine_failures --run-ids <id>  # just one run
    python -m eval.mine_failures --no-judge      # skip the LLM classification, grader signals only
+   python -m eval.mine_failures --cluster       # also embed+cluster failures (see below)
    ```
 
 **How a run gets classified:**
 - `eval/graders.py` — deterministic signals: `TraceGrader` reads the trace itself (a rejected verification, a malformed-JSON retry loop, a timeout); `CodeGrader` runs flake8/mypy/syntax/import-resolution/TODO-detection over `generated_repo/`.
 - `eval/judge.py` — an LLM-as-judge pass for what graders can't pin down mechanically (e.g. "did the extractor actually understand the paper"), given the taxonomy rubric + grader signals + a condensed trace.
 - `eval/mine_failures.py` — aggregates both into a JSON report (`output/failure_report_<timestamp>.json`) with per-run classifications and a taxonomy-wide failure-mode histogram.
+
+**Clustering (`eval/cluster_failures.py`) — finding what the taxonomy can't distinguish:**
+the 18-mode taxonomy answers "which known category is this", which flattens
+real variety: 12 `VERIFICATION_REJECTED` failures across different runs
+might be 12 unrelated causes, or one root cause worded 12 different ways
+(this is literally how the relation key-drift bug was actually found — by
+manually reading output, which clustering exists specifically to avoid
+needing to do again). `--cluster` embeds every grader signal + judge
+rationale (`OpenAIEmbeddings`), groups them with DBSCAN over cosine
+distance (no cluster count to pick up front; a truly one-off failure stays
+its own singleton rather than getting forced into the nearest group), and
+asks an LLM for a one-line root-cause label per cluster of 2+. Output
+lands in the report's `failure_clusters` list, largest first. This is a
+separate, additive lens on the same underlying signals — it doesn't
+replace the fixed taxonomy (which stays the stable, interpretable
+baseline `improve/diagnose.py` targets), it surfaces what's actually
+recurring underneath it.
 
 ## Continuous Agent Improvement (`improve/`)
 

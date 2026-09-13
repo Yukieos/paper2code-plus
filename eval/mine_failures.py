@@ -3,6 +3,7 @@
     python -m eval.mine_failures                       # mine every run found
     python -m eval.mine_failures --run-ids 20260912-... # mine specific runs
     python -m eval.mine_failures --no-judge             # skip the LLM judge (grader signals only)
+    python -m eval.mine_failures --cluster              # also cluster failures within/across modes
     python -m eval.mine_failures --output report.json
 
 Looks for each run's generated_repo/ under runs/<run_id>/generated_repo (where
@@ -68,7 +69,7 @@ def mine_run(run_id: str, store: TraceStore, runs_dir: Path, use_judge: bool, ju
     return RunResult(run_id=run_id, trace_count=len(traces), grader_signals=combined, judge_verdict=verdict)
 
 
-def build_report(results: list[RunResult]) -> dict:
+def build_report(results: list[RunResult], clusters: "list | None" = None) -> dict:
     mode_counts = Counter()
     for result in results:
         mode_counts.update(m.value for m in result.all_modes)
@@ -76,13 +77,16 @@ def build_report(results: list[RunResult]) -> dict:
     healthy_runs = [r.run_id for r in results if not r.all_modes]
     failing_runs = [r.run_id for r in results if r.all_modes]
 
-    return {
+    report = {
         "runs_mined": len(results),
         "healthy_runs": healthy_runs,
         "failing_runs": failing_runs,
         "failure_mode_counts": dict(mode_counts.most_common()),
         "runs": [r.to_dict() for r in results],
     }
+    if clusters is not None:
+        report["failure_clusters"] = [c.to_dict() for c in clusters]
+    return report
 
 
 def print_summary(report: dict) -> None:
@@ -95,6 +99,14 @@ def print_summary(report: dict) -> None:
     else:
         print("No failures detected.")
 
+    clusters = report.get("failure_clusters")
+    if clusters:
+        print("\nFailure clusters (recurring patterns within/across modes, largest first):")
+        for cluster in clusters:
+            if cluster["size"] < 2:
+                continue
+            print(f"  [{cluster['size']}] {cluster['label']}  (modes: {', '.join(cluster['modes']) or 'unclassified'})")
+
 
 def main(argv: list[str] | None = None) -> dict:
     parser = argparse.ArgumentParser(description="Mine Paper2Code agent traces for recurring failures.")
@@ -105,6 +117,12 @@ def main(argv: list[str] | None = None) -> dict:
     parser.add_argument("--bucket", type=str, default=None, help="Override the S3 trace bucket.")
     parser.add_argument("--no-judge", action="store_true", help="Skip the LLM-as-judge classification step.")
     parser.add_argument("--model", type=str, default="gpt-4o-mini", help="Model to use for the LLM judge.")
+    parser.add_argument("--cluster", action="store_true",
+                         help="Also embed+cluster failures to surface recurring patterns within/across the "
+                              "fixed taxonomy modes (e.g. several differently-worded failures sharing one "
+                              "root cause). Costs one embeddings call plus one label call per cluster.")
+    parser.add_argument("--cluster-eps", type=float, default=0.35,
+                         help="DBSCAN cosine-distance threshold — lower = stricter clustering (default: 0.35).")
     parser.add_argument("--output", type=Path, default=None,
                          help="Where to write the JSON report (default: output/failure_report_<timestamp>.json).")
     args = parser.parse_args(argv)
@@ -118,7 +136,15 @@ def main(argv: list[str] | None = None) -> dict:
     judge = None if args.no_judge else LLMJudge(model=args.model)
 
     results = [mine_run(run_id.strip(), store, args.runs_dir, not args.no_judge, judge) for run_id in run_ids if run_id.strip()]
-    report = build_report(results)
+
+    clusters = None
+    if args.cluster:
+        from eval.cluster_failures import cluster_failures
+
+        logger.info("Clustering failures...")
+        clusters = cluster_failures(results, eps=args.cluster_eps)
+
+    report = build_report(results, clusters=clusters)
 
     output_path = args.output
     if output_path is None:
