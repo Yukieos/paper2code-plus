@@ -1274,6 +1274,73 @@ class SyntaxCheckerAgent:
 
 # Specialized Agents for Modular Code Generation
 
+
+def introspect_signatures(output_dir: Path, generated_files: List[str]) -> Tuple[str, Dict[str, str]]:
+    """Returns (rendered signatures text, {top_level_name: real_module}) for
+    every already-generated .py file.
+
+    This is the single source of "what already exists in this repo, with its
+    real parameter lists", extracted by AST rather than guessed. Used both by
+    the sibling-context injection during generation (so each file is written
+    KNOWING what its siblings already define) and by EntryPointAgent at the
+    end (so the entry point is checked against the same ground truth).
+    """
+    lines = []
+    symbol_index: Dict[str, str] = {}
+    for file_path in sorted(set(generated_files)):
+        path = Path(file_path)
+        if not path.exists() or path.suffix != ".py":
+            continue
+        try:
+            tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
+        except SyntaxError:
+            continue
+
+        try:
+            module = str(path.relative_to(output_dir).with_suffix("")).replace(os.sep, ".")
+        except ValueError:
+            module = path.stem
+
+        defs = []
+        for node in tree.body:
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                args = [a.arg for a in node.args.args]
+                defs.append(f"def {node.name}({', '.join(args)})")
+                symbol_index[node.name] = module
+            elif isinstance(node, ast.ClassDef):
+                methods = [
+                    f"{n.name}({', '.join(a.arg for a in n.args.args)})"
+                    for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
+                ]
+                defs.append(f"class {node.name}: methods = [{', '.join(methods)}]")
+                symbol_index[node.name] = module
+        if defs:
+            lines.append(f"- module `{module}`:\n  " + "\n  ".join(defs))
+
+    text = "\n".join(lines) if lines else "(no other files have been generated yet)"
+    return text, symbol_index
+
+
+def prior_generated_files(state: "CodegenState") -> List[str]:
+    """Every file written by an earlier stage of this same pipeline run."""
+    return (
+        list(state.get("dataset_files", []))
+        + list(state.get("execution_files", []))
+        + list(state.get("evaluation_files", []))
+    )
+
+
+# The specialized-agent prompts below each inline a "sibling context" block
+# (an intro line, the {sibling_context} placeholder, and a reuse-don't-redefine
+# instruction) so files are written KNOWING what siblings already define —
+# preventing duplicate/incompatible definitions at the source instead of
+# relying on SymbolConsistencyAgent to detect and patch them after the fact
+# (that agent stays on as a deterministic backstop). The block is inlined as
+# adjacent string literals rather than a shared constant on purpose: the
+# improve/ prompt registry can only read/tune a prompt that is a single plain
+# string constant, so each prompt must stay self-contained.
+
+
 DATASET_PROMPT = (
     "You are an expert data engineer. Write the file `{file_path}` for dataset loading and preprocessing.\n\n"
     "REQUIREMENTS:\n"
@@ -1297,6 +1364,15 @@ DATASET_PROMPT = (
     "File plan:\n{file_plan}\n\n"
     "Configuration template:\n{config_template}\n\n"
     "UPS-IR context:\n{ups_ir_summary}\n\n"
+    "Other files ALREADY GENERATED in this same repository, with their real "
+    "top-level definitions and actual parameter lists (ground truth, not a plan):\n"
+    "{sibling_context}\n\n"
+    "REUSE, DO NOT REDEFINE:\n"
+    "- If this file needs any symbol listed above, IMPORT it from the exact module "
+    "path shown and call it with exactly those parameters. Do NOT write a second, "
+    "differently-shaped definition of a name that already exists above — that "
+    "produces two incompatible versions of the same function across the repo.\n"
+    "- Only define names that do not already appear above.\n\n"
     "Generate production-ready code. Return ONLY the complete file content without markdown fences."
 )
 
@@ -1315,6 +1391,15 @@ EXECUTION_PROMPT_ML = (
     "Configuration template:\n{config_template}\n\n"
     "Flow reasoning:\n{flow_reasoning}\n\n"
     "UPS-IR context:\n{ups_ir_summary}\n\n"
+    "Other files ALREADY GENERATED in this same repository, with their real "
+    "top-level definitions and actual parameter lists (ground truth, not a plan):\n"
+    "{sibling_context}\n\n"
+    "REUSE, DO NOT REDEFINE:\n"
+    "- If this file needs any symbol listed above, IMPORT it from the exact module "
+    "path shown and call it with exactly those parameters. Do NOT write a second, "
+    "differently-shaped definition of a name that already exists above — that "
+    "produces two incompatible versions of the same function across the repo.\n"
+    "- Only define names that do not already appear above.\n\n"
     "Generate production-ready code. Return ONLY the complete file content without markdown fences."
 )
 
@@ -1331,6 +1416,15 @@ EXECUTION_PROMPT_ALGORITHM = (
     "File plan:\n{file_plan}\n\n"
     "Configuration template:\n{config_template}\n\n"
     "UPS-IR context:\n{ups_ir_summary}\n\n"
+    "Other files ALREADY GENERATED in this same repository, with their real "
+    "top-level definitions and actual parameter lists (ground truth, not a plan):\n"
+    "{sibling_context}\n\n"
+    "REUSE, DO NOT REDEFINE:\n"
+    "- If this file needs any symbol listed above, IMPORT it from the exact module "
+    "path shown and call it with exactly those parameters. Do NOT write a second, "
+    "differently-shaped definition of a name that already exists above — that "
+    "produces two incompatible versions of the same function across the repo.\n"
+    "- Only define names that do not already appear above.\n\n"
     "Generate production-ready code. Return ONLY the complete file content without markdown fences."
 )
 
@@ -1347,6 +1441,15 @@ EVALUATION_PROMPT = (
     "File plan:\n{file_plan}\n\n"
     "Configuration template:\n{config_template}\n\n"
     "UPS-IR context:\n{ups_ir_summary}\n\n"
+    "Other files ALREADY GENERATED in this same repository, with their real "
+    "top-level definitions and actual parameter lists (ground truth, not a plan):\n"
+    "{sibling_context}\n\n"
+    "REUSE, DO NOT REDEFINE:\n"
+    "- If this file needs any symbol listed above, IMPORT it from the exact module "
+    "path shown and call it with exactly those parameters. Do NOT write a second, "
+    "differently-shaped definition of a name that already exists above — that "
+    "produces two incompatible versions of the same function across the repo.\n"
+    "- Only define names that do not already appear above.\n\n"
     "Generate production-ready code. Return ONLY the complete file content without markdown fences."
 )
 
@@ -1393,6 +1496,7 @@ class DatasetAgent:
             return state
 
         generated: List[str] = []
+        prior = prior_generated_files(state)
 
         for spec in file_specs:
             file_path = spec.get("path")
@@ -1404,11 +1508,16 @@ class DatasetAgent:
 
             logger.info(f"DatasetAgent generating {absolute_path}")
 
+            # Source-level sharing: tell this file what siblings already
+            # defined (prior stages + earlier files in this loop) so it
+            # imports/reuses instead of reinventing a clashing definition.
+            sibling_context, _ = introspect_signatures(self.config.output_dir, prior + generated)
             prompt_input = {
                 "file_path": file_path,
                 "file_plan": json.dumps(spec, ensure_ascii=False, indent=2),
                 "config_template": json.dumps(config_template, indent=2),
                 "ups_ir_summary": summarize_ups_ir(ups_ir, max_chars=3000),
+                "sibling_context": sibling_context,
             }
 
             try: 
@@ -1484,6 +1593,7 @@ class ExecutionAgent:
             return state
 
         generated: List[str] = []
+        prior = prior_generated_files(state)
 
         # Choose chain based on paper type
         if paper_type == PaperType.ML_TRAINING.value:
@@ -1503,6 +1613,10 @@ class ExecutionAgent:
 
             logger.info(f"ExecutionAgent generating {absolute_path} ({execution_type})")
 
+            # Source-level sharing: dataset files (and earlier execution
+            # files in this loop) are ground truth here — import/reuse their
+            # real signatures rather than inventing a clashing second copy.
+            sibling_context, _ = introspect_signatures(self.config.output_dir, prior + generated)
             prompt_input = {
                 "file_path": file_path,
                 "execution_type": execution_type,
@@ -1510,6 +1624,7 @@ class ExecutionAgent:
                 "config_template": json.dumps(config_template, indent=2),
                 "flow_reasoning": flow_reasoning,
                 "ups_ir_summary": summarize_ups_ir(ups_ir, max_chars=3000),
+                "sibling_context": sibling_context,
             }
 
             try:
@@ -1565,6 +1680,7 @@ class EvaluationAgent:
             return state
 
         generated: List[str] = []
+        prior = prior_generated_files(state)
 
         for spec in file_specs:
             file_path = spec.get("path")
@@ -1576,11 +1692,16 @@ class EvaluationAgent:
 
             logger.info(f"EvaluationAgent generating {absolute_path}")
 
+            # Source-level sharing: dataset + execution files (and earlier
+            # evaluation files) are ground truth — import/reuse rather than
+            # redefining metrics/loaders under a clashing signature.
+            sibling_context, _ = introspect_signatures(self.config.output_dir, prior + generated)
             prompt_input = {
                 "file_path": file_path,
                 "file_plan": json.dumps(spec, ensure_ascii=False, indent=2),
                 "config_template": json.dumps(config_template, indent=2),
                 "ups_ir_summary": summarize_ups_ir(ups_ir, max_chars=3000),
+                "sibling_context": sibling_context,
             }
 
             try:
@@ -1879,44 +2000,12 @@ class EntryPointAgent:
         self.chain = prompt | self.llm | StrOutputParser()
 
     @staticmethod
-    def _introspect(output_dir: Path, generated_files: List[str]) -> tuple[str, Dict[str, str]]:
-        """Returns (rendered signatures text, {top_level_name: real_module})
-        for every already-generated file, so the entry point can be both
-        prompted with and mechanically checked against ground truth."""
-        lines = []
-        symbol_index: Dict[str, str] = {}
-        for file_path in sorted(set(generated_files)):
-            path = Path(file_path)
-            if not path.exists() or path.suffix != ".py":
-                continue
-            try:
-                tree = ast.parse(path.read_text(encoding="utf-8"), filename=str(path))
-            except SyntaxError:
-                continue
-
-            try:
-                module = str(path.relative_to(output_dir).with_suffix("")).replace(os.sep, ".")
-            except ValueError:
-                module = path.stem
-
-            defs = []
-            for node in tree.body:
-                if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
-                    args = [a.arg for a in node.args.args]
-                    defs.append(f"def {node.name}({', '.join(args)})")
-                    symbol_index[node.name] = module
-                elif isinstance(node, ast.ClassDef):
-                    methods = [
-                        f"{n.name}({', '.join(a.arg for a in n.args.args)})"
-                        for n in node.body if isinstance(n, (ast.FunctionDef, ast.AsyncFunctionDef))
-                    ]
-                    defs.append(f"class {node.name}: methods = [{', '.join(methods)}]")
-                    symbol_index[node.name] = module
-            if defs:
-                lines.append(f"- module `{module}`:\n  " + "\n  ".join(defs))
-
-        text = "\n".join(lines) if lines else "(no other files were generated — write a minimal, self-contained script)"
-        return text, symbol_index
+    def _introspect(output_dir: Path, generated_files: List[str]) -> Tuple[str, Dict[str, str]]:
+        """Ground-truth signatures of every already-generated file, so the
+        entry point can be both prompted with and mechanically checked
+        against them. Shares one implementation with the sibling-context
+        injection used during generation (see introspect_signatures)."""
+        return introspect_signatures(output_dir, generated_files)
 
     @staticmethod
     def _find_import_mismatches(entry_code: str, symbol_index: Dict[str, str]) -> List[str]:
