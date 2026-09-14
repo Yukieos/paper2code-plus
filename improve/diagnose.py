@@ -7,7 +7,7 @@ from __future__ import annotations
 
 import json
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable
 
 from eval.mine_failures import RunResult
@@ -23,10 +23,14 @@ Failure mode: {mode} — {description}
 Evidence from {n} run(s) exhibiting this failure:
 {evidence}
 
-Task: identify the most likely root cause — which agent's prompt is most
-responsible, and specifically what about its current instructions leads to
-this failure mode. Be concrete: point at what's missing, ambiguous, or wrong
-in the prompt, not just a restatement of the symptom.
+Task: diagnose the root cause. Work like an engineer, not a guesser:
+1. Point at ONE smoking gun — the single most telling concrete detail in the
+   evidence that this diagnosis hinges on (quote/paraphrase it, don't restate
+   the mode name).
+2. List at least TWO distinct root-cause hypotheses that could explain it.
+3. Pick the most likely one as `root_cause`, and name the agent whose prompt
+   most owns it. Be concrete about what's missing/ambiguous/wrong in that
+   prompt.
 
 `responsible_agent` MUST be EXACTLY one of these tunable agent names (or null
 if no single one of them owns this failure) — do not invent a name, and do not
@@ -35,8 +39,10 @@ describe a role in your own words:
 
 Respond with ONLY a JSON object of this exact shape:
 {{
+  "smoking_gun": "<the single most telling piece of evidence>",
+  "hypotheses": ["<hypothesis 1>", "<hypothesis 2>", ...],
   "responsible_agent": "<one of the agent names listed above, verbatim, or null>",
-  "root_cause": "<2-4 sentences, concrete and specific>",
+  "root_cause": "<the most likely hypothesis, 2-4 sentences, concrete>",
   "confidence": <float 0-1>
 }}
 """
@@ -49,6 +55,8 @@ class Diagnosis:
     root_cause: str
     confidence: float
     run_ids: list[str]
+    smoking_gun: str = ""
+    hypotheses: list[str] = field(default_factory=list)
 
     def to_dict(self) -> dict:
         return {
@@ -57,6 +65,8 @@ class Diagnosis:
             "root_cause": self.root_cause,
             "confidence": self.confidence,
             "run_ids": self.run_ids,
+            "smoking_gun": self.smoking_gun,
+            "hypotheses": self.hypotheses,
         }
 
 
@@ -124,10 +134,13 @@ def diagnose(
                        "Valid agents: %s", responsible, ", ".join(valid_agents))
         responsible = None
 
+    hypotheses = [str(h) for h in (data.get("hypotheses") or []) if str(h).strip()]
     return Diagnosis(
         mode=mode,
         responsible_agent=responsible,
         root_cause=str(data.get("root_cause", "")),
         confidence=float(data.get("confidence", 0.0) or 0.0),
         run_ids=[r.run_id for r in matching_results],
+        smoking_gun=str(data.get("smoking_gun", "")),
+        hypotheses=hypotheses,
     )

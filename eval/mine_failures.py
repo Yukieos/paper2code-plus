@@ -123,6 +123,8 @@ def main(argv: list[str] | None = None) -> dict:
                               "root cause). Costs one embeddings call plus one label call per cluster.")
     parser.add_argument("--cluster-eps", type=float, default=0.35,
                          help="DBSCAN cosine-distance threshold — lower = stricter clustering (default: 0.35).")
+    parser.add_argument("--judge-votes", type=int, default=3,
+                         help="LLM-judge votes per run, aggregated by majority/median (default 3).")
     parser.add_argument("--output", type=Path, default=None,
                          help="Where to write the JSON report (default: output/failure_report_<timestamp>.json).")
     args = parser.parse_args(argv)
@@ -133,7 +135,7 @@ def main(argv: list[str] | None = None) -> dict:
     if not run_ids:
         logger.warning("No runs found to mine. Did you set PAPER2CODE_TRACE_ENABLED=1 during pipeline runs?")
 
-    judge = None if args.no_judge else LLMJudge(model=args.model)
+    judge = None if args.no_judge else LLMJudge(model=args.model, votes=args.judge_votes)
 
     results = [mine_run(run_id.strip(), store, args.runs_dir, not args.no_judge, judge) for run_id in run_ids if run_id.strip()]
 

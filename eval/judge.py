@@ -36,9 +36,15 @@ deterministic signals above (e.g. the extractor misreading the paper, or the
 plan drifting from the UPS-IR). If the deterministic signals already fully
 explain the run's failures, or the run looks healthy, say so.
 
+For primary_failure_mode:
+- use one of the taxonomy ids above when the failure clearly matches it;
+- use "other" if there IS a real failure but NONE of the ids above fit it
+  (do not force a bad match into a named mode);
+- use null ONLY if the run looks healthy / has no failure.
+
 Respond with ONLY a JSON object of this exact shape:
 {{
-  "primary_failure_mode": "<one of the taxonomy ids above, or null if none>",
+  "primary_failure_mode": "<a taxonomy id above, or \\"other\\", or null>",
   "secondary_failure_modes": ["<taxonomy id>", ...],
   "confidence": <float 0-1>,
   "rationale": "<one or two sentences>"
@@ -79,17 +85,17 @@ def _default_llm_call(prompt: str, model: str = "gpt-4o-mini") -> str:
 
 
 class LLMJudge:
-    def __init__(self, llm_call: Callable[[str], str] | None = None, model: str = "gpt-4o-mini"):
+    def __init__(self, llm_call: Callable[[str], str] | None = None, model: str = "gpt-4o-mini",
+                 votes: int = 3):
         self.model = model
         self.llm_call = llm_call or (lambda prompt: _default_llm_call(prompt, model=model))
+        # A single LLM judgment is noisy. Voting `votes` times and aggregating
+        # (majority for whether-it-failed and the mode, median for confidence)
+        # is what makes the classification stable enough to drive an automated
+        # change. votes=1 recovers the old single-shot behavior.
+        self.votes = max(1, votes)
 
-    def classify(self, traces: list[TraceRecord], grader_report: GraderReport) -> JudgeVerdict:
-        prompt = JUDGE_PROMPT_TEMPLATE.format(
-            rubric=render_rubric(),
-            grader_signals=json.dumps(grader_report.to_dict(), indent=2) if grader_report.signals else "(none)",
-            trace_summary=_summarize_traces(traces),
-        )
-
+    def _classify_once(self, prompt: str) -> JudgeVerdict:
         try:
             raw = self.llm_call(prompt)
             data = json.loads(_extract_json(raw), strict=False)  # tolerate literal newlines in rationale
@@ -97,16 +103,48 @@ class LLMJudge:
             logger.warning("LLM judge call failed or returned unparseable output (%s); leaving run unclassified.", exc)
             return JudgeVerdict(None, [], 0.0, f"Judge call failed: {exc}")
 
-        primary_raw = data.get("primary_failure_mode")
-        primary = _safe_mode(primary_raw)
+        primary = _safe_mode(data.get("primary_failure_mode"))
         secondary = [m for m in (_safe_mode(m) for m in data.get("secondary_failure_modes", []) or []) if m]
+        return JudgeVerdict(primary, secondary, float(data.get("confidence", 0.0) or 0.0),
+                            str(data.get("rationale", "")))
 
-        return JudgeVerdict(
-            primary_failure_mode=primary,
-            secondary_failure_modes=secondary,
-            confidence=float(data.get("confidence", 0.0) or 0.0),
-            rationale=str(data.get("rationale", "")),
+    def classify(self, traces: list[TraceRecord], grader_report: GraderReport) -> JudgeVerdict:
+        prompt = JUDGE_PROMPT_TEMPLATE.format(
+            rubric=render_rubric(),
+            grader_signals=json.dumps(grader_report.to_dict(), indent=2) if grader_report.signals else "(none)",
+            trace_summary=_summarize_traces(traces),
         )
+        verdicts = [self._classify_once(prompt) for _ in range(self.votes)]
+        return _aggregate_verdicts(verdicts, self.votes)
+
+
+def _aggregate_verdicts(verdicts: list[JudgeVerdict], votes: int) -> JudgeVerdict:
+    """Combine N judge votes: majority decides whether it failed and which mode;
+    confidence is the median across votes; a mode is 'secondary' if it appears
+    in a majority of votes."""
+    import statistics
+
+    n = len(verdicts)
+    majority = n // 2 + 1
+    confidence = statistics.median([v.confidence for v in verdicts]) if verdicts else 0.0
+
+    # Majority vote on whether this is a failure at all.
+    primaries = [v.primary_failure_mode for v in verdicts if v.primary_failure_mode]
+    if len(primaries) < majority:
+        return JudgeVerdict(None, [], confidence,
+                            f"{n - len(primaries)}/{n} votes saw no unexplained failure.")
+
+    # Mode = plurality of the non-null primary votes (ties -> most_common order).
+    from collections import Counter
+    primary = Counter(primaries).most_common(1)[0][0]
+
+    sec_counts = Counter(m for v in verdicts for m in set(v.secondary_failure_modes))
+    secondary = [m for m, c in sec_counts.items() if c >= majority and m != primary]
+
+    rationale = next((v.rationale for v in verdicts if v.primary_failure_mode == primary), "")
+    agree = sum(1 for p in primaries if p == primary)
+    return JudgeVerdict(primary, secondary, confidence,
+                        f"[{agree}/{n} votes] {rationale}")
 
 
 def _safe_mode(value: str | None) -> FailureMode | None:
@@ -115,8 +153,10 @@ def _safe_mode(value: str | None) -> FailureMode | None:
     try:
         return FailureMode(value)
     except ValueError:
-        logger.warning("Judge returned unknown failure mode id: %r", value)
-        return None
+        # The judge named a failure but not one of our ids -> that's exactly the
+        # OTHER (taxonomy-expansion) signal, not something to silently drop.
+        logger.info("Judge returned unrecognized failure id %r; recording as OTHER.", value)
+        return FailureMode.OTHER
 
 
 def _extract_json(text: str) -> str:

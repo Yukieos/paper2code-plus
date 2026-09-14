@@ -28,6 +28,7 @@ import tempfile
 from collections import Counter
 from pathlib import Path
 
+from eval.cluster_failures import cluster_failures
 from eval.judge import LLMJudge
 from eval.mine_failures import mine_run
 from eval.taxonomy import FailureMode
@@ -53,12 +54,45 @@ def _run(cmd: list[str], **kwargs) -> subprocess.CompletedProcess:
 
 
 def pick_target_mode(results, explicit: str | None) -> FailureMode | None:
+    """Fallback selection: the most common mode by raw count, excluding OTHER
+    (OTHER isn't a fixable mode — it's a signal to expand the taxonomy)."""
     if explicit:
         return FailureMode(explicit)
-    counts = Counter(m for r in results for m in r.all_modes)
+    counts = Counter(m for r in results for m in r.all_modes if m != FailureMode.OTHER)
     if not counts:
         return None
     return counts.most_common(1)[0][0]
+
+
+def select_target(results, args) -> tuple[FailureMode | None, str]:
+    """Pick which failure to work on, and explain how. Prefers the largest
+    recurring CLUSTER's dominant mode (a pattern that recurs, not just a mode
+    that's individually common) over the raw per-mode count. Falls back to the
+    count if clustering is off, unavailable, or finds no multi-instance group.
+    Returns (mode, human-readable selection note)."""
+    if args.failure_mode:
+        return FailureMode(args.failure_mode), f"explicit --failure-mode {args.failure_mode}"
+
+    # Surface an OTHER pileup: it can't be auto-fixed, but a human should see it.
+    other_count = sum(1 for r in results for m in r.all_modes if m == FailureMode.OTHER)
+    if other_count:
+        logger.info("%d failure(s) classified OTHER — unmapped modes that may need a new taxonomy entry "
+                    "(not auto-fixable).", other_count)
+
+    if not args.no_cluster_target:
+        try:
+            clusters = cluster_failures(results, eps=args.cluster_eps)  # largest first
+        except Exception as exc:  # embeddings unavailable / no key / sklearn issue
+            logger.warning("Clustering failed (%s); falling back to raw mode counts.", exc)
+            clusters = []
+        for cluster in clusters:
+            modes = [m for m in (i.mode for i in cluster.instances) if m and m != FailureMode.OTHER]
+            if cluster.size >= 2 and modes:
+                dominant = Counter(modes).most_common(1)[0][0]
+                return dominant, f"largest recurring cluster '{cluster.label}' (size {cluster.size})"
+
+    mode = pick_target_mode(results, None)
+    return mode, "most common failure mode by raw count"
 
 
 def changelog_path() -> Path:
@@ -94,8 +128,10 @@ def _record_changelog(mode, diagnosis, proposals, results, repro_summary,
         triggering_runs=diagnosis.run_ids,
         reproduced=repro_summary,
         observed_behavior=diagnosis.root_cause,
-        smoking_gun=_smoking_gun(results, mode),
-        hypotheses=[f"{diagnosis.responsible_agent}: {diagnosis.root_cause} (confidence {diagnosis.confidence:.2f})"],
+        smoking_gun=diagnosis.smoking_gun or _smoking_gun(results, mode),
+        hypotheses=(diagnosis.hypotheses
+                    or [f"{diagnosis.responsible_agent}: {diagnosis.root_cause} "
+                        f"(confidence {diagnosis.confidence:.2f})"]),
         changes=[f"{c.ref.constant_name} in {c.ref.file_path} — {c.explanation}" for c in proposals],
         files_changed=sorted({c.ref.file_path for c in proposals}),
         targeted_result=targeted_summary,
@@ -137,6 +173,12 @@ def main(argv: list[str] | None = None) -> int:
                          help="Minimum re-runs that must re-exhibit the failure to count as reproduced (default 2).")
     parser.add_argument("--verify-attempts", type=int, default=1,
                          help="Post-fix re-runs of the triggering input to confirm the failure is gone (default 1).")
+    parser.add_argument("--judge-votes", type=int, default=3,
+                         help="How many times the LLM judge votes per run; aggregated by majority/median (default 3).")
+    parser.add_argument("--no-cluster-target", action="store_true",
+                         help="Pick the target by raw per-mode count instead of the largest recurring cluster.")
+    parser.add_argument("--cluster-eps", type=float, default=0.35,
+                         help="DBSCAN cosine-distance threshold for clustering target selection (default 0.35).")
     args = parser.parse_args(argv)
     runs_dir = REPO_ROOT / "runs"
 
@@ -152,14 +194,14 @@ def main(argv: list[str] | None = None) -> int:
         return 1
 
     logger.info("Mining %d run(s)...", len(run_ids))
-    judge = LLMJudge(model=args.model)
+    judge = LLMJudge(model=args.model, votes=args.judge_votes)
     results = [mine_run(run_id, store, runs_dir, use_judge=True, judge=judge) for run_id in run_ids]
 
-    mode = pick_target_mode(results, args.failure_mode)
+    mode, selection_note = select_target(results, args)
     if mode is None:
-        logger.info("No failures found across %d run(s). Nothing to improve.", len(run_ids))
+        logger.info("No auto-fixable failures found across %d run(s). Nothing to improve.", len(run_ids))
         return 0
-    logger.info("Targeting failure mode: %s", mode.value)
+    logger.info("Targeting failure mode: %s (%s)", mode.value, selection_note)
 
     # The triggering run's original input — needed to reproduce the failure and,
     # later, to verify the fix. Reproduction/verification are impossible without

@@ -57,6 +57,8 @@ def _fake_diagnosis() -> Diagnosis:
         root_cause="Prompt does not tell the model to remove unused imports.",
         confidence=0.8,
         run_ids=["seed-1"],
+        smoking_gun="flake8 F401 unused import across 3 runs",
+        hypotheses=["prompt omits a lint step", "no unused-import instruction"],
     )
 
 
@@ -99,6 +101,7 @@ class RunCycleOfflineTest(unittest.TestCase):
             mock.patch.object(run_cycle, "TraceStore", return_value=store),
             mock.patch.object(run_cycle, "LLMJudge", return_value=mock.Mock()),
             mock.patch.object(run_cycle, "mine_run", side_effect=lambda rid, *a, **k: _fake_run_result(rid)),
+            mock.patch.object(run_cycle, "cluster_failures", return_value=[]),  # offline: fall back to counts
             mock.patch.object(run_cycle, "load_run_input", return_value="# A paper\n\nfake input text"),
             mock.patch.object(run_cycle, "reproduce_failure", return_value=_fake_repro(repro_ok)),
             mock.patch.object(run_cycle, "verify_target_fixed", return_value=_fake_verify(verify_ok)),

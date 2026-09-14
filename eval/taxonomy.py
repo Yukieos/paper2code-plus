@@ -37,6 +37,14 @@ class FailureMode(str, Enum):
     IMPORT_DEPENDENCY_ERROR = "import_dependency_error"
     RUNTIME_EXECUTION_FAILURE = "runtime_execution_failure"
 
+    # --- Meta ------------------------------------------------------------
+    # A real failure the judge identified but could NOT map to any of the 18
+    # modes above. Deliberately kept out of TAXONOMY/the rubric: it's not a
+    # 19th category to classify into, it's a taxonomy-EXPANSION signal. A
+    # rising count of OTHER means the pipeline is failing in a way we haven't
+    # named yet and a human should add a mode for it.
+    OTHER = "other"
+
 
 @dataclass(frozen=True)
 class FailureModeSpec:
@@ -84,7 +92,16 @@ TAXONOMY: list[FailureModeSpec] = [
                      "The generated repo raises an exception when actually executed (smoke run)."),
 ]
 
+OTHER_SPEC = FailureModeSpec(
+    FailureMode.OTHER, "meta",
+    "A real failure the judge could not map to any of the 18 known modes — a "
+    "taxonomy-expansion signal, not an auto-fixable category.",
+)
+
+# TAXONOMY stays the 18 named modes (and drives the rubric). BY_MODE also
+# includes OTHER so lookups (e.g. in diagnose) never KeyError on it.
 TAXONOMY_BY_MODE: dict[FailureMode, FailureModeSpec] = {spec.mode: spec for spec in TAXONOMY}
+TAXONOMY_BY_MODE[FailureMode.OTHER] = OTHER_SPEC
 
 assert len(TAXONOMY) == 18, f"Expected 18 failure modes, found {len(TAXONOMY)}"
 
