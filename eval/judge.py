@@ -92,7 +92,7 @@ class LLMJudge:
 
         try:
             raw = self.llm_call(prompt)
-            data = json.loads(_extract_json(raw))
+            data = json.loads(_extract_json(raw), strict=False)  # tolerate literal newlines in rationale
         except Exception as exc:  # pragma: no cover - network/model dependent
             logger.warning("LLM judge call failed or returned unparseable output (%s); leaving run unclassified.", exc)
             return JudgeVerdict(None, [], 0.0, f"Judge call failed: {exc}")

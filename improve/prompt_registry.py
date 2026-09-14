@@ -153,3 +153,10 @@ def set_prompt_text(ref: PromptRef, new_text: str) -> None:
 
 def refs_for_agent(agent_name: str) -> list[PromptRef]:
     return PROMPT_REGISTRY.get(agent_name, [])
+
+
+def registered_agents() -> list[str]:
+    """The agent names an automated change is actually allowed to touch — i.e.
+    the only valid values for a diagnosis's `responsible_agent`. Diagnosis must
+    choose from these; anything else can't be turned into a prompt change."""
+    return list(PROMPT_REGISTRY.keys())

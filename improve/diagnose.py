@@ -12,6 +12,7 @@ from typing import Callable
 
 from eval.mine_failures import RunResult
 from eval.taxonomy import FailureMode, TAXONOMY_BY_MODE
+from improve.prompt_registry import registered_agents
 
 logger = logging.getLogger(__name__)
 
@@ -27,9 +28,14 @@ responsible, and specifically what about its current instructions leads to
 this failure mode. Be concrete: point at what's missing, ambiguous, or wrong
 in the prompt, not just a restatement of the symptom.
 
+`responsible_agent` MUST be EXACTLY one of these tunable agent names (or null
+if no single one of them owns this failure) — do not invent a name, and do not
+describe a role in your own words:
+{agent_names}
+
 Respond with ONLY a JSON object of this exact shape:
 {{
-  "responsible_agent": "<agent_name most responsible, or null if it's not a prompt issue>",
+  "responsible_agent": "<one of the agent names listed above, verbatim, or null>",
   "root_cause": "<2-4 sentences, concrete and specific>",
   "confidence": <float 0-1>
 }}
@@ -92,23 +98,35 @@ def diagnose(
     call = llm_call or (lambda prompt: _default_llm_call(prompt, model=model))
     spec = TAXONOMY_BY_MODE[mode]
     matching_results = [r for r in results if mode in r.all_modes]
+    valid_agents = registered_agents()
 
     prompt = DIAGNOSIS_PROMPT_TEMPLATE.format(
         mode=mode.value,
         description=spec.description,
         n=len(matching_results),
         evidence=_evidence_block(mode, matching_results),
+        agent_names="\n".join(f"- {name}" for name in valid_agents),
     )
 
     try:
-        data = json.loads(_extract_json(call(prompt)))
+        data = json.loads(_extract_json(call(prompt)), strict=False)  # tolerate literal newlines in root_cause
     except Exception as exc:  # pragma: no cover - network/model dependent
         logger.warning("Diagnosis call failed (%s).", exc)
         return Diagnosis(mode, None, f"Diagnosis failed: {exc}", 0.0, [r.run_id for r in matching_results])
 
+    # The model can still return a name that isn't a registered agent (e.g. a
+    # made-up "code_generator"). propose_change can only act on a registered
+    # one, so anything else becomes None here — the loop then stops cleanly
+    # instead of silently no-opping one step later with a confusing warning.
+    responsible = data.get("responsible_agent") or None
+    if responsible and responsible not in valid_agents:
+        logger.warning("Diagnosis named unregistered agent %r; treating as no specific agent. "
+                       "Valid agents: %s", responsible, ", ".join(valid_agents))
+        responsible = None
+
     return Diagnosis(
         mode=mode,
-        responsible_agent=data.get("responsible_agent") or None,
+        responsible_agent=responsible,
         root_cause=str(data.get("root_cause", "")),
         confidence=float(data.get("confidence", 0.0) or 0.0),
         run_ids=[r.run_id for r in matching_results],

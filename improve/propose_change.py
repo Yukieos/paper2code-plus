@@ -95,7 +95,11 @@ def propose_changes(
             current_prompt=old_prompt,
         )
         try:
-            data = json.loads(_extract_json(call(prompt)))
+            # strict=False: the new_prompt value is a full multi-line prompt,
+            # and the model routinely emits literal newlines/tabs inside that
+            # JSON string rather than escaping them — which strict parsing
+            # rejects as an "invalid control character".
+            data = json.loads(_extract_json(call(prompt)), strict=False)
             new_prompt = str(data["new_prompt"])
             explanation = str(data.get("explanation", ""))
         except Exception as exc:  # pragma: no cover - network/model dependent

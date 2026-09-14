@@ -57,9 +57,16 @@ class GateReport:
         return "\n".join(lines)
 
 
-def _run_fixture(fixture_path: Path, group: str, workdir: Path, model: str, env: dict) -> FixtureResult:
+def run_pipeline_on_text(
+    name: str, input_text: str, group: str, workdir: Path, model: str, env: dict,
+) -> FixtureResult:
+    """Run the real pipeline (extraction -> codegen) on one paper's Markdown in
+    an isolated workdir, then grade the generated repo. This is the single
+    execution path shared by the eval gate, the reproduce check, and targeted
+    verification — so all three grade a fix against exactly the same run.
+    """
     workdir.mkdir(parents=True, exist_ok=True)
-    (workdir / "input.md").write_text(fixture_path.read_text(encoding="utf-8"), encoding="utf-8")
+    (workdir / "input.md").write_text(input_text, encoding="utf-8")
 
     extraction = subprocess.run(
         [sys.executable, str(REPO_ROOT / "main.py"), "input.md", "--model", model, "--skip-annotation"],
@@ -67,7 +74,7 @@ def _run_fixture(fixture_path: Path, group: str, workdir: Path, model: str, env:
     )
     extraction_ok = extraction.returncode == 0
     if not extraction_ok:
-        logger.warning("Extraction failed for %s: %s", fixture_path.name, extraction.stdout[-2000:])
+        logger.warning("Extraction failed for %s: %s", name, extraction.stdout[-2000:])
 
     codegen_ok = False
     report = GraderReport()
@@ -78,10 +85,25 @@ def _run_fixture(fixture_path: Path, group: str, workdir: Path, model: str, env:
         )
         codegen_ok = codegen.returncode == 0
         if not codegen_ok:
-            logger.warning("Codegen failed for %s: %s", fixture_path.name, codegen.stdout[-2000:])
+            logger.warning("Codegen failed for %s: %s", name, codegen.stdout[-2000:])
         report = CodeGrader(workdir / "generated_repo").grade()
 
-    return FixtureResult(fixture_path.stem, group, extraction_ok, codegen_ok, report)
+    return FixtureResult(name, group, extraction_ok, codegen_ok, report)
+
+
+def gate_env(extra_env: dict | None = None) -> dict:
+    """Environment for a non-mined pipeline run (gate / reproduce / verify):
+    tracing off, so these internal re-runs never pollute the trace store we
+    mine production failures from."""
+    env = os.environ.copy()
+    env["PAPER2CODE_TRACE_ENABLED"] = "0"
+    env.update(extra_env or {})
+    return env
+
+
+def _run_fixture(fixture_path: Path, group: str, workdir: Path, model: str, env: dict) -> FixtureResult:
+    return run_pipeline_on_text(fixture_path.stem, fixture_path.read_text(encoding="utf-8"),
+                                group, workdir, model, env)
 
 
 def run_gate(
@@ -91,9 +113,7 @@ def run_gate(
     model: str = "gpt-4o-mini",
     extra_env: dict | None = None,
 ) -> GateReport:
-    env = os.environ.copy()
-    env["PAPER2CODE_TRACE_ENABLED"] = "0"  # gate runs are not what we're mining for failures
-    env.update(extra_env or {})
+    env = gate_env(extra_env)  # tracing off: gate runs are not what we mine for failures
 
     report = GateReport(label=label)
     for group in ("heldout", "regression"):
