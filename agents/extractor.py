@@ -115,14 +115,7 @@ VERIFIER_FEEDBACK_RETRY_TEMPLATE = (
 )
 
 RETRY_PROMPT_TEMPLATE = (
-    "The initial UPS-IR extraction missed or left empty the following sections: {missing_fields}. "
-    "Quality concerns to address:\n"
-    "{quality_notes}\n\n"
-    "Existing partial content for those sections is shown below; extend or refine it without duplicating IDs:\n"
-    "{existing_json}\n\n"
-    "Re-read the thesis text and output a JSON object containing ONLY the missing top-level keys listed above. "
-    "Honor the quality notes, keep IDs consistent (continue numbering if you must add new entities), and cite precise source references. "
-    "Thesis content:\n\"\"\"\n{text}\n\"\"\""
+    'The initial UPS-IR extraction missed or left empty the following sections: {missing_fields}. Quality concerns to address: {quality_notes} Please ensure that any libraries included in the output are strictly necessary for the generated code and avoid unnecessary imports that may lead to flake8 warnings. Existing partial content for those sections is shown below; extend or refine it without duplicating IDs: {existing_json} Re-read the thesis text and output a JSON object containing ONLY the missing top-level keys listed above. Honor the quality notes, keep IDs consistent (continue numbering if you must add new entities), and cite precise source references. Thesis content: """{text}"""'
 )
 
 
