@@ -2163,8 +2163,12 @@ class PipelineRepairActions:
         return self.state.get("entry_point_path") or "main.py"
 
     def smoke(self) -> SmokeResult:
+        # A training paper that produces zero loss ran nothing useful — require
+        # a real signal so a no-op (e.g. a swallowed exception exiting 0) isn't
+        # mistaken for a working reproduction.
+        require_progress = self.state.get("paper_type") == PaperType.ML_TRAINING.value
         return run_smoke(self.config.output_dir, entry=self._entry(),
-                         timeout=self.timeout, mem_mb=self.mem_mb)
+                         timeout=self.timeout, mem_mb=self.mem_mb, require_progress=require_progress)
 
     def regenerate_file(self, rel_path: str, traceback: str) -> bool:
         if not rel_path:

@@ -115,7 +115,7 @@ def _limit_memory(mem_mb: int):
     return _set
 
 
-def _grade(returncode, timed_out, stdout, stderr, log_text, repo_dir) -> SmokeResult:
+def _grade(returncode, timed_out, stdout, stderr, log_text, repo_dir, require_progress=False) -> SmokeResult:
     combined = "\n".join([stdout, stderr, log_text])
     losses = [v for v in parse_losses(combined)]
     finite = [v for v in losses if math.isfinite(v)]
@@ -146,9 +146,16 @@ def _grade(returncode, timed_out, stdout, stderr, log_text, repo_dir) -> SmokeRe
         res.reason = f"runtime crash (exit {returncode})"
         return res
 
-    # Exited cleanly and didn't diverge. Any finite loss is a bonus signal; its
-    # absence isn't a hard failure at smoke level (some entry points don't print
-    # one), but completing without crashing is the bar.
+    # Exited cleanly and didn't diverge.
+    if require_progress and not finite:
+        # Expected a training signal but got none: the entry point exited 0
+        # while producing no loss/metric at all — typically generated code that
+        # swallows its own exception and returns, or a no-op training loop.
+        # Treat as failure so the repair loop keeps going instead of declaring
+        # victory on a run that trained nothing.
+        res.reason = "ran to completion but produced NO loss/metric (training likely a no-op)"
+        return res
+
     res.ok = True
     res.reason = "ran to completion" + (", loss decreasing" if progressed else
                                         (", loss seen" if finite else ", no loss detected"))
@@ -162,9 +169,16 @@ def run_smoke(
     timeout: int = 120,
     mem_mb: int = 2048,
     env: dict | None = None,
+    require_progress: bool = False,
 ) -> SmokeResult:
     """Execute repo_dir/<entry> as a subprocess (cwd=repo_dir) under a wall-clock
-    timeout and best-effort memory cap, then grade the run."""
+    timeout and best-effort memory cap, then grade the run.
+
+    require_progress: when True (e.g. a training paper, which MUST produce a
+    loss), a clean exit that produced no loss/metric at all counts as a failure
+    rather than a pass — otherwise code that swallows its own exception and
+    exits 0 would masquerade as a working reproduction.
+    """
     repo_dir = Path(repo_dir)
     entry_path = repo_dir / entry
     if not entry_path.exists():
@@ -186,4 +200,5 @@ def run_smoke(
         if isinstance(stderr, bytes):
             stderr = stderr.decode("utf-8", "replace")
 
-    return _grade(returncode, timed_out, stdout, stderr, _collect_log_text(repo_dir), repo_dir)
+    return _grade(returncode, timed_out, stdout, stderr, _collect_log_text(repo_dir), repo_dir,
+                  require_progress=require_progress)

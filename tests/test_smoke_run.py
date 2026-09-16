@@ -115,6 +115,27 @@ class SmokeRunTest(unittest.TestCase):
         self.assertTrue(res.timed_out)
         self.assertFalse(res.ok)
 
+    def test_require_progress_fails_on_clean_no_loss_run(self):
+        # exits 0 but logs no loss/metric — a no-op that must NOT pass when we
+        # expect training progress (mimics generated code swallowing its error)
+        repo = _mkrepo({"main.py": """
+            import argparse
+            p = argparse.ArgumentParser(); p.add_argument('--config'); p.add_argument('--seed'); p.parse_args()
+            print('setup done, trained nothing')
+        """})
+        self.assertTrue(run_smoke(repo, timeout=30).ok)  # lenient default: clean exit passes
+        strict = run_smoke(repo, timeout=30, require_progress=True)
+        self.assertFalse(strict.ok, strict.summary())
+        self.assertIn("no loss", strict.reason.lower())
+
+    def test_require_progress_passes_when_loss_present(self):
+        repo = _mkrepo({"main.py": """
+            import argparse
+            p = argparse.ArgumentParser(); p.add_argument('--config'); p.add_argument('--seed'); p.parse_args()
+            print('loss: 0.9'); print('loss: 0.4')
+        """})
+        self.assertTrue(run_smoke(repo, timeout=30, require_progress=True).ok)
+
     def test_missing_entry_point(self):
         repo = _mkrepo({"notmain.py": "print('hi')"})
         res = run_smoke(repo, timeout=10)
