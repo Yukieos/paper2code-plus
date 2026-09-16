@@ -20,6 +20,7 @@ from langchain_core.prompts import ChatPromptTemplate
 from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
+from metric_repro import assess_fidelity, run_for_metrics
 from repro_repair import repair_reproduction
 from smoke_run import SmokeResult, run_smoke
 
@@ -3010,6 +3011,17 @@ def build_arg_parser() -> argparse.ArgumentParser:
     parser.add_argument("--smoke-file-attempts", type=int, default=2,
                         help="Max single-file regenerations before escalating to re-plan (default 2).")
     parser.add_argument(
+        "--check-fidelity",
+        action="store_true",
+        help="After generation, RUN the repo to completion and compare the metric it produces to the "
+             "paper's claimed number (from UPS-IR experiments). Needs the repo's deps installed and is "
+             "as slow/expensive as actually training.",
+    )
+    parser.add_argument("--fidelity-timeout", type=int, default=1800,
+                        help="Wall-clock seconds for the fidelity run (default 1800).")
+    parser.add_argument("--fidelity-rel-tol", type=float, default=0.05,
+                        help="Relative tolerance for a claimed-vs-achieved metric match (default 0.05).")
+    parser.add_argument(
         "--no-intermediate",
         action="store_true",
         help="Don't save intermediate code drafts.",
@@ -3192,6 +3204,23 @@ def main(argv: List[str] | None = None) -> CodegenState:
                 "summary": outcome.summary(),
             }
             logger.info("Reproduction repair: %s", outcome.summary())
+
+        # Stage 5f (opt-in): reproduction FIDELITY — run to completion and
+        # compare the produced metric to the paper's claimed number. This is
+        # the only layer that answers "does it match the authors' results";
+        # it's as slow/expensive as real training, hence opt-in.
+        if getattr(args, "check_fidelity", False):
+            logger.info("Stage 5f: Reproduction fidelity (running to completion, comparing to paper's claims)")
+            entry = state.get("entry_point_path") or "main.py"
+            output, timed_out = run_for_metrics(args.output_dir, entry=entry, timeout=args.fidelity_timeout)
+            fidelity = assess_fidelity(state.get("ups_ir", {}), output, rel_tol=args.fidelity_rel_tol)
+            state["repro_fidelity"] = {
+                "reproduced": fidelity.reproduced,
+                "timed_out": timed_out,
+                "summary": fidelity.summary(),
+                "comparisons": [c.__dict__ for c in fidelity.comparisons],
+            }
+            logger.info("Reproduction fidelity: %s%s", fidelity.summary(), " [timed out]" if timed_out else "")
 
         # Stage 6: Syntax checking (lightweight baseline)
         logger.info("Stage 6: Running syntax checks")
