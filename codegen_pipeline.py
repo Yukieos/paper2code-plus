@@ -21,6 +21,7 @@ from langchain_openai import ChatOpenAI
 from pydantic import BaseModel, Field, ValidationError, field_validator
 
 from metric_repro import assess_fidelity, run_for_metrics
+from repro_diagnose import apply_repair_plan, build_prompt, diagnose_reproduction, read_repo_files
 from repro_repair import repair_reproduction
 from smoke_run import SmokeResult, run_smoke
 
@@ -2097,19 +2098,6 @@ class EntryPointAgent:
         return state
 
 
-REPAIR_PROMPT = (
-    "The file `{file_path}` in a generated PyTorch repository CRASHED when the "
-    "repository was actually run. Fix it so the repo runs.\n\n"
-    "Runtime traceback:\n```\n{traceback}\n```\n\n"
-    "Other files already in the repo, with their real top-level definitions "
-    "(import/call these exactly; do not redefine or invent):\n{sibling_context}\n\n"
-    "This file's plan:\n{file_plan}\n\n"
-    "Current content of `{file_path}`:\n```python\n{current_code}\n```\n\n"
-    "Rewrite ONLY this file to fix the specific runtime error, keeping everything "
-    "that already works. Return ONLY the complete corrected file content, no markdown fences."
-)
-
-
 def generate_repo(state: CodegenState, writer_config: "CodeWriterConfig") -> CodegenState:
     """Re-run the whole generation stage (owners -> dataset/execution/evaluation
     -> symbol-consistency -> entry point) on the current state. Used by the
@@ -2144,20 +2132,20 @@ class PipelineRepairActions:
 
     def __init__(self, state: CodegenState, writer_config: "CodeWriterConfig", *,
                  timeout: int = 120, mem_mb: int = 2048,
-                 planner_agent: Any = None, classifier: Any = None):
+                 planner_agent: Any = None, classifier: Any = None, trace_text: str = ""):
         self.state = state
         self.config = writer_config
         self.timeout = timeout
         self.mem_mb = mem_mb
         self.planner_agent = planner_agent
         self.classifier = classifier
-        self._chain = None
+        self.trace_text = trace_text  # agent execution trace, when available
+        self._llm = None
 
-    def _repair_chain(self):
-        if self._chain is None:
-            llm = ChatOpenAI(model=self.config.model_name, temperature=self.config.temperature)
-            self._chain = ChatPromptTemplate.from_template(REPAIR_PROMPT) | llm | StrOutputParser()
-        return self._chain
+    def _llm_call(self, prompt: str) -> str:
+        if self._llm is None:  # lazy: construct only when a repair actually runs
+            self._llm = ChatOpenAI(model=self.config.model_name, temperature=self.config.temperature)
+        return self._llm.invoke(prompt).content
 
     def _entry(self) -> str:
         return self.state.get("entry_point_path") or "main.py"
@@ -2170,30 +2158,35 @@ class PipelineRepairActions:
         return run_smoke(self.config.output_dir, entry=self._entry(),
                          timeout=self.timeout, mem_mb=self.mem_mb, require_progress=require_progress)
 
-    def regenerate_file(self, rel_path: str, traceback: str) -> bool:
-        if not rel_path:
+    def diagnose_and_patch(self, result: SmokeResult) -> bool:
+        """Diagnose the WHOLE repo (all files + why the agents wrote them + the
+        paper as ground truth) and apply a coherent multi-file patch. Returns
+        False when the diagnosis escalates or no edit applied, so the controller
+        moves on to re-plan."""
+        repo_files = read_repo_files(self.config.output_dir)
+        if not repo_files:
             return False
-        abs_path = self.config.output_dir / rel_path
-        if not abs_path.exists():
-            return False
-        spec = next((f for f in self.state.get("plan", {}).get("files", []) if f.get("path") == rel_path), {})
-        others = [p for p in self.state.get("generated_files", []) if Path(p).resolve() != abs_path.resolve()]
-        sibling_context, _ = introspect_signatures(self.config.output_dir, others)
+        prompt = build_prompt(
+            repo_files=repo_files,
+            smoke_reason=result.reason,
+            traceback=result.traceback or result.stderr_tail,
+            ups_ir=self.state.get("ups_ir", {}),
+            plan=self.state.get("plan"),
+            code_reviews=self.state.get("code_reviews"),
+            flow_reasoning=self.state.get("flow_reasoning"),
+            trace_text=self.trace_text,
+        )
         try:
-            new_code = strip_fences(self._repair_chain().invoke({
-                "file_path": rel_path,
-                "current_code": abs_path.read_text(encoding="utf-8"),
-                "traceback": (traceback or "")[:4000],
-                "sibling_context": sibling_context,
-                "file_plan": json.dumps(spec, ensure_ascii=False, indent=2),
-            }))
-            if not new_code or len(new_code) < 20:
-                return False
-            abs_path.write_text(new_code, encoding="utf-8")
-            return True
+            plan = diagnose_reproduction(prompt, self._llm_call)
         except Exception as e:
-            logger.error("regenerate_file failed for %s: %s", rel_path, e)
+            logger.error("diagnose_and_patch failed: %s", e)
             return False
+        if plan.escalate and not plan.edits:
+            logger.info("Diagnosis escalates (no coherent multi-file fix): %s", plan.root_cause[:200])
+            return False
+        changed = apply_repair_plan(self.config.output_dir, plan)
+        logger.info("Reproduction diagnosis: %s | edited %s", plan.summary(), changed or "(nothing)")
+        return bool(changed)
 
     def replan_and_regenerate(self) -> bool:
         if self.planner_agent is None:
@@ -3005,15 +2998,15 @@ def build_arg_parser() -> argparse.ArgumentParser:
         "--smoke-repair",
         action="store_true",
         help="After generation, actually RUN the repo (smoke) and, on failure, redo reproduction "
-             "steps (regenerate crashing file / re-plan / re-classify). Needs the repo's own deps "
-             "(torch, ...) installed.",
+             "steps (diagnose whole repo vs the paper + multi-file patch / re-plan / re-classify). "
+             "Needs the repo's own deps (torch, ...) installed.",
     )
     parser.add_argument("--smoke-timeout", type=int, default=120,
                         help="Wall-clock seconds for each smoke run (default 120).")
     parser.add_argument("--smoke-mem-mb", type=int, default=2048,
                         help="Best-effort memory cap per smoke run, MB (default 2048).")
     parser.add_argument("--smoke-file-attempts", type=int, default=2,
-                        help="Max single-file regenerations before escalating to re-plan (default 2).")
+                        help="Max whole-repo diagnose+patch attempts before escalating to re-plan (default 2).")
     parser.add_argument(
         "--check-fidelity",
         action="store_true",
@@ -3195,11 +3188,21 @@ def main(argv: List[str] | None = None) -> CodegenState:
             logger.info("Stage 5e: Smoke-run + within-run reproduction repair")
             planner = PlannerAgent(PlannerConfig(
                 output_path=args.output_dir / "code_plan.json", model_name=args.model))
+            # Agent execution trace for this run, if tracing was on — lets the
+            # diagnosis see WHY the agents generated the code this way.
+            trace_text = ""
+            try:
+                records = trace_store.get_traces(run_id)
+                trace_text = "\n".join(
+                    f"- [{r.stage}/{r.agent_name}] {'ok' if r.success else 'FAILED: ' + (r.error or '')}; "
+                    f"{(r.output_excerpt or '')[:400]}" for r in records)
+            except Exception:
+                pass
             repair_actions = PipelineRepairActions(
                 state, writer_config, timeout=args.smoke_timeout, mem_mb=args.smoke_mem_mb,
-                planner_agent=planner, classifier=PaperTypeClassifier(),
+                planner_agent=planner, classifier=PaperTypeClassifier(), trace_text=trace_text,
             )
-            outcome = repair_reproduction(repair_actions, file_attempts=args.smoke_file_attempts)
+            outcome = repair_reproduction(repair_actions, patch_attempts=args.smoke_file_attempts)
             state = repair_actions.state
             state["smoke_repair"] = {
                 "repaired": outcome.repaired,

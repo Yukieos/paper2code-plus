@@ -26,11 +26,11 @@ class RepairActionsGuardTest(unittest.TestCase):
         a.state["entry_point_path"] = "run.py"
         self.assertEqual(a._entry(), "run.py")
 
-    def test_regenerate_missing_file_returns_false_without_llm(self):
-        a = self._actions()
-        self.assertFalse(a.regenerate_file("does_not_exist.py", "tb"))
-        self.assertFalse(a.regenerate_file("", "tb"))
-        self.assertIsNone(a._chain)  # never built the LLM chain -> no credentials needed
+    def test_diagnose_patch_on_empty_repo_returns_false_without_llm(self):
+        from smoke_run import SmokeResult
+        a = self._actions()  # output_dir has no .py files
+        self.assertFalse(a.diagnose_and_patch(SmokeResult(ok=False, reason="crash", crashed=True)))
+        self.assertIsNone(a._llm)  # never built the LLM -> no credentials needed
 
     def test_replan_without_planner_returns_false(self):
         a = self._actions()  # no planner_agent injected

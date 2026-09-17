@@ -7,9 +7,12 @@ This is the run-internal counterpart to the cross-run, human-gated harness
 loop in improve/ (which is the only thing allowed to change our own prompts).
 
 Escalation ladder (cheapest first), each bounded:
-  1. regenerate the single offending file  (a crash with a clear in-repo frame)
-  2. re-plan + re-split files              (structural: cross-file/import/hang)
-  3. re-classify the paper type            (whole approach/file-set looks wrong)
+  1. diagnose_and_patch  — diagnose the WHOLE repo at once (all files + why the
+     agents wrote them + the paper as ground truth) and apply a coherent
+     MULTI-FILE patch. Not single-file: a caller/callee signature mismatch has
+     to be fixed on both sides together, or the crash just moves.
+  2. re-plan + re-split files      — the plan/decomposition itself is wrong
+  3. re-classify the paper type    — whole approach/file-set looks wrong
 Exhausting the ladder is itself a signal — an unrepairable reproduction is
 exactly the kind of recurring failure the cross-run improver should later mine.
 
@@ -21,7 +24,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass, field
-from typing import Callable, Protocol
+from typing import Protocol
 
 from smoke_run import SmokeResult
 
@@ -33,7 +36,7 @@ class RepairActions(Protocol):
     generated repo in place; none touches the pipeline's own code."""
 
     def smoke(self) -> SmokeResult: ...
-    def regenerate_file(self, rel_path: str, traceback: str) -> bool: ...
+    def diagnose_and_patch(self, result: SmokeResult) -> bool: ...
     def replan_and_regenerate(self) -> bool: ...
     def reclassify_and_regenerate(self) -> bool: ...
 
@@ -62,7 +65,7 @@ class RepairOutcome:
 
 def repair_reproduction(
     actions: RepairActions,
-    file_attempts: int = 2,
+    patch_attempts: int = 2,
     replan_attempts: int = 1,
     reclassify_attempts: int = 1,
 ) -> RepairOutcome:
@@ -74,18 +77,18 @@ def repair_reproduction(
         logger.info("Reproduction smoke passed on first run: %s", result.summary())
         return RepairOutcome(True, result, steps)
 
-    file_budget, replan_budget, reclassify_budget = file_attempts, replan_attempts, reclassify_attempts
+    patch_budget, replan_budget, reclassify_budget = patch_attempts, replan_attempts, reclassify_attempts
 
     while not result.ok:
-        action, detail = _choose_action(result, file_budget, replan_budget, reclassify_budget)
+        action, detail = _choose_action(patch_budget, replan_budget, reclassify_budget)
         if action is None:
             logger.info("Repair ladder exhausted; reproduction still failing: %s", result.reason)
             break
 
-        logger.info("Reproduction failed (%s); repair action: %s (%s)", result.reason, action, detail)
-        if action == "regenerate_file":
-            file_budget -= 1
-            applied = actions.regenerate_file(result.offending_file, result.traceback)
+        logger.info("Reproduction failed (%s); repair action: %s", result.reason, action)
+        if action == "diagnose_patch":
+            patch_budget -= 1
+            applied = actions.diagnose_and_patch(result)
         elif action == "replan":
             replan_budget -= 1
             applied = actions.replan_and_regenerate()
@@ -94,12 +97,12 @@ def repair_reproduction(
             applied = actions.reclassify_and_regenerate()
 
         if not applied:
-            # The action couldn't run (e.g. regeneration failed); record and,
-            # rather than retrying the same dead end, drop its budget to 0 so
-            # the ladder escalates on the next pass.
-            steps.append(RepairStep(action, f"{detail} [action failed to apply]", result))
-            if action == "regenerate_file":
-                file_budget = 0
+            # The action couldn't apply (diagnosis escalated / regeneration
+            # failed). Record it and zero that tier's budget so the ladder
+            # escalates on the next pass instead of retrying a dead end.
+            steps.append(RepairStep(action, f"{detail} [no change applied]", result))
+            if action == "diagnose_patch":
+                patch_budget = 0
             elif action == "replan":
                 replan_budget = 0
             else:
@@ -112,17 +115,12 @@ def repair_reproduction(
     return RepairOutcome(result.ok, result, steps)
 
 
-def _choose_action(result: SmokeResult, file_budget: int, replan_budget: int, reclassify_budget: int):
-    """Pick the cheapest still-budgeted action that fits the failure.
-
-    A clean single-file crash → regenerate that file. Anything structural
-    (a crash with no in-repo frame, a hang, divergence) or a crash that
-    regeneration keeps failing to fix → re-plan; then, as a last resort,
-    re-classify the paper type.
-    """
-    single_file_crash = result.crashed and bool(result.offending_file)
-    if single_file_crash and file_budget > 0:
-        return "regenerate_file", f"regenerate {result.offending_file}"
+def _choose_action(patch_budget: int, replan_budget: int, reclassify_budget: int):
+    """Cheapest still-budgeted tier: whole-repo diagnose+patch, then re-plan,
+    then re-classify. The diagnosis handles any failure shape (crash, hang,
+    divergence, cross-file mismatch), so there's no per-failure gating here."""
+    if patch_budget > 0:
+        return "diagnose_patch", "diagnose whole repo and apply a coherent multi-file patch"
     if replan_budget > 0:
         return "replan", "re-plan and re-split files"
     if reclassify_budget > 0:
