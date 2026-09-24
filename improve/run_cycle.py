@@ -181,6 +181,11 @@ def main(argv: list[str] | None = None) -> int:
                          help="DBSCAN cosine-distance threshold for clustering target selection (default 0.35).")
     args = parser.parse_args(argv)
     runs_dir = REPO_ROOT / "runs"
+    try:  # judge/diagnose/propose/embeddings read OPENAI_API_KEY from the env
+        from dotenv import load_dotenv
+        load_dotenv(REPO_ROOT / ".env")
+    except ImportError:
+        pass
 
     if not any((FIXTURES_DIR / "heldout").glob("*.md")):
         logger.error("No fixtures under %s/heldout/*.md — see eval/fixtures/README.md before running this.",

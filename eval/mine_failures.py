@@ -27,6 +27,17 @@ logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(na
 logger = logging.getLogger(__name__)
 
 
+def _load_env() -> None:
+    """Best-effort load of the repo's .env (by absolute path, so it works from
+    any cwd) — the judge and embeddings read OPENAI_API_KEY from the environment
+    and there's no reason to make callers wrap this by hand."""
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        return
+    load_dotenv(Path(__file__).resolve().parent.parent / ".env")
+
+
 @dataclass
 class RunResult:
     run_id: str
@@ -128,6 +139,7 @@ def main(argv: list[str] | None = None) -> dict:
     parser.add_argument("--output", type=Path, default=None,
                          help="Where to write the JSON report (default: output/failure_report_<timestamp>.json).")
     args = parser.parse_args(argv)
+    _load_env()  # so the judge + embeddings get OPENAI_API_KEY without a manual wrapper
 
     store = TraceStore(bucket=args.bucket)
     run_ids = args.run_ids.split(",") if args.run_ids else store.list_run_ids()
@@ -144,7 +156,13 @@ def main(argv: list[str] | None = None) -> dict:
         from eval.cluster_failures import cluster_failures
 
         logger.info("Clustering failures...")
-        clusters = cluster_failures(results, eps=args.cluster_eps)
+        try:
+            clusters = cluster_failures(results, eps=args.cluster_eps)
+        except Exception as exc:
+            # Clustering needs embeddings (an API key). Degrade to a
+            # cluster-less report instead of crashing the whole mine.
+            logger.warning("Clustering unavailable (%s); writing report without clusters.", exc)
+            clusters = None
 
     report = build_report(results, clusters=clusters)
 
